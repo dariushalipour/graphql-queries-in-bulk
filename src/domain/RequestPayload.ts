@@ -56,8 +56,16 @@ export class RequestPayload {
 		return this.getOperationDefinition().name?.value ?? null;
 	}
 
-	isQuery(): boolean {
+	private isQuery(): boolean {
 		return this.getOperationDefinition().operation === "query";
+	}
+
+	private hasOnlyOneDefinition(): boolean {
+		return this.documentNode.definitions.length === 1;
+	}
+
+	canGetNamespaced(): boolean {
+		return this.isQuery() && this.hasOnlyOneDefinition();
 	}
 
 	getFields(documentNode: DocumentNode = this.documentNode): FieldNode[] {

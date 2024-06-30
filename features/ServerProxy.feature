@@ -21,6 +21,27 @@ Feature: ServerProxy
       }
       """
 
+  Scenario: When the request has more than one definition, bypass the bundler
+    Given server responds "QueryWithFragment" with
+      """json
+      {"data":{}}
+      """
+    And the following request comes in
+      """json
+      {
+      "operationName":"QueryWithFragment",
+      "query":"fragment xyz on Xyz {\n  id\n}\n\nquery QueryWithFragment($id: ID!) {\n  ...xyz\n}"
+      }
+      """
+    When the bundling interval is hit
+    Then the server should be called with
+      """json
+      {
+      "operationName":"QueryWithFragment",
+      "query":"fragment xyz on Xyz {\n  id\n}\n\nquery QueryWithFragment($id: ID!) {\n  ...xyz\n}"
+      }
+      """
+
   Scenario: Single Request Without Alias
     Given server responds "BundledQuery" with
       """json

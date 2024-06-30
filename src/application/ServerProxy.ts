@@ -26,9 +26,9 @@ export class ServerProxy {
 	}
 
 	public async submitRequest(request: Request): Promise<Response> {
-		const isQuery = await this.isQueryRequest(request);
+		const canGetBundled = await this.canGetBundled(request);
 
-		if (!isQuery) {
+		if (!canGetBundled) {
 			return this.fetchFunc(request);
 		}
 
@@ -39,10 +39,10 @@ export class ServerProxy {
 		});
 	}
 
-	private async isQueryRequest(request: Request): Promise<boolean> {
+	private async canGetBundled(request: Request): Promise<boolean> {
 		const body = await request.clone().text();
 		const payload = RequestPayload.fromString(body);
-		return payload.isQuery();
+		return payload.canGetNamespaced();
 	}
 
 	private popAllRequests() {
