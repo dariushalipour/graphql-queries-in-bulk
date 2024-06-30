@@ -10,11 +10,11 @@ type ServerProxyOptions = {
 
 export class ServerProxy {
 	private readonly fetchFunc: typeof fetch;
-	private requests: Request[] = [];
-	private responsePromises: [
-		(response: Response) => void,
-		(error: Error) => void,
-	][] = [];
+	private requests: {
+		request: Request;
+		resolve: (response: Response) => void;
+		reject: (error: Error) => void;
+	}[] = [];
 	private softExecute: DebouncedFunc<() => Promise<void>>;
 
 	constructor(options: ServerProxyOptions) {
@@ -32,11 +32,13 @@ export class ServerProxy {
 			return this.fetchFunc(request);
 		}
 
-		this.requests.push(request);
-		this.softExecute();
-		return new Promise((resolve, reject) => {
-			this.responsePromises.push([resolve, reject]);
+		const promise = new Promise<Response>((resolve, reject) => {
+			this.requests.push({ request, resolve, reject });
 		});
+
+		this.softExecute();
+
+		return promise;
 	}
 
 	private async canGetBundled(request: Request): Promise<boolean> {
@@ -48,25 +50,28 @@ export class ServerProxy {
 	private popAllRequests() {
 		const requests = [...this.requests];
 		this.requests = [];
-		return requests;
+		return { requests };
 	}
 
 	private async execute(): Promise<void> {
-		const requests = this.popAllRequests();
+		const { requests } = this.popAllRequests();
 
 		if (requests.length === 0) {
 			return;
 		}
 
 		const [sampleRequest] = requests;
-		const payloads = await Promise.all(requests.map((r) => r.clone().text()));
+
+		const payloads = await Promise.all(
+			requests.map(({ request }) => request.clone().text()),
+		);
 
 		const { output, sourceMap } = new RequestBundler(payloads).execute();
 
 		const response = await this.fetchFunc(
-			new Request(sampleRequest.url, {
-				method: sampleRequest.method,
-				headers: sampleRequest.headers,
+			new Request(sampleRequest.request.url, {
+				method: sampleRequest.request.method,
+				headers: sampleRequest.request.headers,
 				body: output,
 			}),
 		);
@@ -77,7 +82,7 @@ export class ServerProxy {
 		} = await response.json();
 
 		if (responseBody.data) {
-			this.responsePromises.forEach(([resolve], requestIndex) => {
+			requests.forEach(({ resolve }, requestIndex) => {
 				const data = sourceMap.getSourceResponseData(
 					String(requestIndex),
 					responseBody.data ?? {},
@@ -95,9 +100,9 @@ export class ServerProxy {
 				resolve(new Response(scopedResponseBody));
 			});
 		} else {
-			this.responsePromises.forEach(([resolve, reject], requestIndex) => {
-				this.fetchFunc(requests[requestIndex]).then(resolve, reject);
-			});
+			for (const { request, resolve, reject } of requests) {
+				this.fetchFunc(request).then(resolve, reject);
+			}
 		}
 	}
 
