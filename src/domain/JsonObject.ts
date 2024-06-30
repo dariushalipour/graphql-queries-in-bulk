@@ -1,1 +1,2 @@
-export type JsonObject = Record<string, string | number | boolean | null>;
+// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+export type JsonObject = Record<string, any>;

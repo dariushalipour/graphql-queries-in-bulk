@@ -52,7 +52,38 @@ export class SourceMap {
 		return namespaced;
 	}
 
-	getSourceResponseBody(
+	getSourceFieldName(
+		requestId: string,
+		namespacedFieldName: string,
+	): string | null {
+		return (
+			this.fields[requestId].find(
+				({ namespaced }) => namespaced === namespacedFieldName,
+			)?.source ?? null
+		);
+	}
+
+	getSourceResponseErrors(
+		requestId: string,
+		errors: (object & { path: string[] })[] | undefined,
+	): object[] | undefined {
+		const scopedErrors = (errors ?? []).flatMap((error) => {
+			const sourceFieldName = this.getSourceFieldName(requestId, error.path[0]);
+
+			return sourceFieldName
+				? [
+						{
+							...error,
+							path: [sourceFieldName, ...error.path.slice(1)],
+						},
+					]
+				: [];
+		});
+
+		return scopedErrors.length > 0 ? scopedErrors : undefined;
+	}
+
+	getSourceResponseData(
 		requestId: string,
 		namespacedResponseBody: JsonObject,
 	): JsonObject {

@@ -79,12 +79,15 @@ Then(
 
 /**
  * @param {number} requestNumber
+ * @param {string} expectedResponseBodyString
  */
 Then(
 	"request number {int} should be responded with",
-	async (requestNumber, expectedResponseBody) => {
+	async (requestNumber, expectedResponseBodyString) => {
 		const response = await proxyResponses[requestNumber - 1];
-		const responseBody = await response.text();
+		const responseBody = await response.json();
+		const expectedResponseBody = JSON.parse(expectedResponseBodyString);
+
 		expect(responseBody).toEqual(expectedResponseBody);
 	},
 );

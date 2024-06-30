@@ -22,6 +22,48 @@ Feature: ServerProxy
       {"data":{"fieldA":15,"fieldB":"win"}}
       """
 
+  Scenario: Single Request With Partial Error
+    Given server response is
+      """json
+      {
+      "errors": [
+      {
+      "message": "oops!",
+      "locations": [{"line":6,"column":3}],
+      "path": ["r0f0"],
+      "extensions": ["Error: oops!", "stack-of.js:30:10"]
+      }
+      ],
+      "data": {"r0f0":null,"r0f1":"win"}
+      }
+      """
+    And the following request comes in
+      """json
+      {"query":"{\n  fieldA\n  fieldB\n}"}
+      """
+    When the bundling interval is hit
+    Then the bundled request should look like this
+      """json
+      {
+      "operationName":"BundledQuery",
+      "query":"query BundledQuery {\n  r0f0: fieldA\n  r0f1: fieldB\n}"
+      }
+      """
+    And request number 1 should be responded with
+      """json
+      {
+      "errors": [
+      {
+      "message": "oops!",
+      "locations": [{"line":6,"column":3}],
+      "path": ["fieldA"],
+      "extensions": ["Error: oops!", "stack-of.js:30:10"]
+      }
+      ],
+      "data":{"fieldA":null,"fieldB":"win"}
+      }
+      """
+
   Scenario: Single Request With Nested Selections
     Given server response is
       """json
@@ -152,4 +194,54 @@ Feature: ServerProxy
     And request number 2 should be responded with
       """json
       {"data":{"see":16,"fieldD":"score"}}
+      """
+
+  Scenario: Dual Request With Partial Error
+    Given server response is
+      """json
+      {
+      "errors": [
+      {
+      "message": "oops!",
+      "locations": [{"line":6,"column":3}],
+      "path": ["r0f0"],
+      "extensions": ["Error: oops!", "stack-of.js:30:10"]
+      }
+      ],
+      "data": {"r0f0":null,"r0f1":"win","r1f0":15}
+      }
+      """
+    And the following request comes in
+      """json
+      {"query":"{\n  fieldA\n  fieldB\n}"}
+      """
+    And the following request comes in
+      """json
+      {"query":"{\n  fieldC\n}"}
+      """
+    When the bundling interval is hit
+    Then the bundled request should look like this
+      """json
+      {
+      "operationName":"BundledQuery",
+      "query":"query BundledQuery {\n  r0f0: fieldA\n  r0f1: fieldB\n  r1f0: fieldC\n}"
+      }
+      """
+    And request number 1 should be responded with
+      """json
+      {
+      "errors": [
+      {
+      "message": "oops!",
+      "locations": [{"line":6,"column":3}],
+      "path": ["fieldA"],
+      "extensions": ["Error: oops!", "stack-of.js:30:10"]
+      }
+      ],
+      "data":{"fieldA":null,"fieldB":"win"}
+      }
+      """
+    And request number 2 should be responded with
+      """json
+      {"data":{"fieldC":15}}
       """

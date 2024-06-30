@@ -1,5 +1,6 @@
-import { type DebouncedFunc, debounce } from "lodash";
+import { type DebouncedFunc, debounce, omitBy, isUndefined } from "lodash";
 import { RequestBundler } from "../domain/RequestBundler";
+import type { JsonObject } from "../domain/JsonObject";
 
 type ServerProxyOptions = {
 	bundlingIntervalMs: number;
@@ -53,18 +54,26 @@ export class ServerProxy {
 				}),
 			);
 
-			const responseBody = await response.json();
+			const responseBody: {
+				errors?: (object & { path: string[] })[];
+				data?: JsonObject;
+			} = await response.json();
 			this.responsePromises.forEach(([resolve], requestIndex) => {
-				resolve(
-					new Response(
-						JSON.stringify({
-							data: sourceMap.getSourceResponseBody(
-								String(requestIndex),
-								responseBody.data,
-							),
-						}),
-					),
+				const data = sourceMap.getSourceResponseData(
+					String(requestIndex),
+					responseBody.data ?? {},
 				);
+
+				const errors = sourceMap.getSourceResponseErrors(
+					String(requestIndex),
+					responseBody.errors,
+				);
+
+				const scopedResponseBody = JSON.stringify(
+					omitBy({ errors, data }, isUndefined),
+				);
+
+				resolve(new Response(scopedResponseBody));
 			});
 		} catch (error) {
 			console.error(error);

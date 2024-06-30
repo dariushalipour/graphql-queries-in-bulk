@@ -7,6 +7,7 @@ import {
 import type { BundledRequest } from "./BundledRequest";
 import { RequestPayload } from "./RequestPayload";
 import { SourceMap } from "./SourceMap";
+import { isNil, omitBy } from "lodash";
 
 export class RequestBundler {
 	private readonly payloads: RequestPayload[];
@@ -56,12 +57,13 @@ export class RequestBundler {
 
 		return {
 			output: JSON.stringify(
-				Object.fromEntries(
-					[
-						["operationName", "BundledQuery"],
-						["query", print(documentNode)],
-						["variables", variables],
-					].filter(([_, value]) => Boolean(value)),
+				omitBy(
+					{
+						operationName: "BundledQuery",
+						query: print(documentNode),
+						variables,
+					},
+					isNil,
 				),
 			),
 			sourceMap: this.sourceMap,
