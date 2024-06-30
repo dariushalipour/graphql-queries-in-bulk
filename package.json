@@ -1,0 +1,25 @@
+{
+	"name": "graphql-queries-in-bulk",
+	"private": true,
+	"license": "Apache-2.0",
+	"version": "0.0.0",
+	"type": "module",
+	"scripts": {
+		"dev": "bunx --bun vite",
+		"build": "bunx --bun tsc && bunx --bun vite",
+		"cucumber": "bunx --bun cucumber-js",
+		"preview": "bunx --bun vite preview"
+	},
+	"devDependencies": {
+		"@apollo/server": "^4.10.4",
+		"@biomejs/biome": "1.8.3",
+		"@cucumber/cucumber": "^10.8.0",
+		"@types/bun": "^1.1.6",
+		"@types/lodash": "^4.17.6",
+		"graphql": "^16.9.0",
+		"graphql-tag": "^2.12.6",
+		"lodash": "^4.17.21",
+		"typescript": "^5.2.2",
+		"vite": "^5.3.1"
+	}
+}
