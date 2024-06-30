@@ -4,9 +4,19 @@
 	"license": "Apache-2.0",
 	"version": "0.0.0",
 	"type": "module",
+	"main": "./dist/graphql-queries-in-bulk.umd.cjs",
+	"module": "./dist/graphql-queries-in-bulk.js",
+	"types": "./src/index.ts",
+	"exports": {
+		".": {
+			"import": "./dist/graphql-queries-in-bulk.js",
+			"require": "./dist/graphql-queries-in-bulk.umd.cjs",
+			"types": "./src/index.ts"
+		}
+	},
 	"scripts": {
 		"dev": "bunx --bun vite",
-		"build": "bunx --bun tsc && bunx --bun vite",
+		"build": "bunx --bun tsc && bunx --bun vite build",
 		"cucumber": "bunx --bun cucumber-js",
 		"preview": "bunx --bun vite preview"
 	},
