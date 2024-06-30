@@ -63,19 +63,20 @@ export class ServerProxy {
 
 		const { output, sourceMap } = new RequestBundler(payloads).execute();
 
-		try {
-			const response = await this.fetchFunc(
-				new Request(sampleRequest.url, {
-					method: sampleRequest.method,
-					headers: sampleRequest.headers,
-					body: output,
-				}),
-			);
+		const response = await this.fetchFunc(
+			new Request(sampleRequest.url, {
+				method: sampleRequest.method,
+				headers: sampleRequest.headers,
+				body: output,
+			}),
+		);
 
-			const responseBody: {
-				errors?: (object & { path: string[] })[];
-				data?: JsonObject;
-			} = await response.json();
+		const responseBody: {
+			errors?: (object & { path: string[] })[];
+			data?: JsonObject;
+		} = await response.json();
+
+		if (responseBody.data) {
 			this.responsePromises.forEach(([resolve], requestIndex) => {
 				const data = sourceMap.getSourceResponseData(
 					String(requestIndex),
@@ -93,8 +94,10 @@ export class ServerProxy {
 
 				resolve(new Response(scopedResponseBody));
 			});
-		} catch (error) {
-			console.error(error);
+		} else {
+			this.responsePromises.forEach(([resolve, reject], requestIndex) => {
+				this.fetchFunc(requests[requestIndex]).then(resolve, reject);
+			});
 		}
 	}
 

@@ -52,6 +52,10 @@ export class RequestPayload {
 		return definition as OperationDefinitionNode;
 	}
 
+	getOperationName(): string | null {
+		return this.getOperationDefinition().name?.value ?? null;
+	}
+
 	isQuery(): boolean {
 		return this.getOperationDefinition().operation === "query";
 	}
