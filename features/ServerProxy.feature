@@ -296,7 +296,6 @@ Feature: ServerProxy
       {
       "message": "oops!",
       "locations": [{"line":6,"column":3}],
-      "path": ["r0f0"],
       "extensions": ["Error: oops!", "stack-of.js:30:10"]
       }
       ]

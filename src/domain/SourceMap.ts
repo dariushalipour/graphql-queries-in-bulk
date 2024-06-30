@@ -87,8 +87,16 @@ export class SourceMap {
 		requestId: string,
 		namespacedResponseBody: JsonObject,
 	): JsonObject {
+		const requestFields = this.fields[requestId];
+
+		if (!requestFields) {
+			throw new Error(
+				`requestId "${requestId}" is not found. fields source map: ${JSON.stringify(this.fields)}`,
+			);
+		}
+
 		return Object.fromEntries(
-			this.fields[requestId].map(({ source, namespaced }) => [
+			requestFields.map(({ source, namespaced }) => [
 				source,
 				namespacedResponseBody[namespaced],
 			]),

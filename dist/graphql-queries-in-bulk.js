@@ -6463,10 +6463,15 @@ class Kg {
     return l.length > 0 ? l : void 0;
   }
   getSourceResponseData(u, r) {
+    const l = this.fields[u];
+    if (!l)
+      throw new Error(
+        `requestId "${u}" is not found. fields source map: ${JSON.stringify(this.fields)}`
+      );
     return Object.fromEntries(
-      this.fields[u].map(({ source: l, namespaced: c }) => [
-        l,
-        r[c]
+      l.map(({ source: c, namespaced: _ }) => [
+        c,
+        r[_]
       ])
     );
   }
