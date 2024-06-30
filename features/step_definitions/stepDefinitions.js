@@ -78,6 +78,19 @@ Then(
 );
 
 /**
+ * @param {string} requestPayloadString
+ */
+Then("the server should be called with", async (requestPayloadString) => {
+	const [request] = fetchFuncRequests;
+	const actualRequestPayload = await request.clone().json();
+	const expectedRequestPayload = RequestPayload.fromString(
+		requestPayloadString.trim(),
+	).toPlainObject();
+
+	expect(actualRequestPayload).toEqual(expectedRequestPayload);
+});
+
+/**
  * @param {number} requestNumber
  * @param {string} expectedResponseBodyString
  */

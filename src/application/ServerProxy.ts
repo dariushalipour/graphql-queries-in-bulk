@@ -1,6 +1,7 @@
 import { type DebouncedFunc, debounce, omitBy, isUndefined } from "lodash";
 import { RequestBundler } from "../domain/RequestBundler";
 import type { JsonObject } from "../domain/JsonObject";
+import { RequestPayload } from "../domain/RequestPayload";
 
 type ServerProxyOptions = {
 	bundlingIntervalMs: number;
@@ -25,6 +26,12 @@ export class ServerProxy {
 	}
 
 	public async submitRequest(request: Request): Promise<Response> {
+		const isQuery = await this.isQueryRequest(request);
+
+		if (!isQuery) {
+			return this.fetchFunc(request);
+		}
+
 		this.requests.push(request);
 		this.softExecute();
 		return new Promise((resolve, reject) => {
@@ -32,14 +39,25 @@ export class ServerProxy {
 		});
 	}
 
-	private popRequests() {
+	private async isQueryRequest(request: Request): Promise<boolean> {
+		const body = await request.clone().text();
+		const payload = RequestPayload.fromString(body);
+		return payload.isQuery();
+	}
+
+	private popAllRequests() {
 		const requests = [...this.requests];
 		this.requests = [];
 		return requests;
 	}
 
 	private async execute(): Promise<void> {
-		const requests = this.popRequests();
+		const requests = this.popAllRequests();
+
+		if (requests.length === 0) {
+			return;
+		}
+
 		const [sampleRequest] = requests;
 		const payloads = await Promise.all(requests.map((r) => r.clone().text()));
 

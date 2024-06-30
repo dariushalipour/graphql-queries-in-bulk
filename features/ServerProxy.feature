@@ -1,5 +1,26 @@
 Feature: ServerProxy
 
+  Scenario: When the request is not a query, bypass the bundler
+    Given server response is
+      """json
+      {"data":{"r0f0":15,"r0f1":"win"}}
+      """
+    And the following request comes in
+      """json
+      {
+      "operationName":"DismissNotification",
+      "query":"mutation DismissNotification($id: ID!) {\n  dismissNotification(id: $id)\n}"
+      }
+      """
+    When the bundling interval is hit
+    Then the server should be called with
+      """json
+      {
+      "operationName":"DismissNotification",
+      "query":"mutation DismissNotification($id: ID!) {\n  dismissNotification(id: $id)\n}"
+      }
+      """
+
   Scenario: Single Request Without Alias
     Given server response is
       """json

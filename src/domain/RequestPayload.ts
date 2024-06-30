@@ -52,6 +52,10 @@ export class RequestPayload {
 		return definition as OperationDefinitionNode;
 	}
 
+	isQuery(): boolean {
+		return this.getOperationDefinition().operation === "query";
+	}
+
 	getFields(documentNode: DocumentNode = this.documentNode): FieldNode[] {
 		return this.getOperationDefinition(
 			documentNode,
