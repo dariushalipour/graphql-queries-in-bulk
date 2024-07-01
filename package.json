@@ -12,7 +12,7 @@
 		".": {
 			"import": "./dist/graphql-queries-in-bulk.js",
 			"require": "./dist/graphql-queries-in-bulk.umd.cjs",
-			"types": "./src/index.ts"
+			"types": "./dist/types/index.ts"
 		}
 	},
 	"author": "Dariush Alipour",
@@ -23,7 +23,7 @@
 	"keywords": ["graphql", "service worker", "debounce", "batch requests"],
 	"scripts": {
 		"dev": "bunx --bun vite",
-		"build": "bunx --bun tsc && bunx --bun vite build",
+		"build": "bunx --bun vite build && bunx --bun tsc -p tsconfig.build.json",
 		"cucumber": "bunx --bun cucumber-js",
 		"preview": "bunx --bun vite preview",
 		"lint": "bunx --bun biome check --write"

@@ -56,37 +56,43 @@ Before(() => {
 	serverProxy = new ServerProxy({ fetchFunc, bundlingIntervalMs });
 });
 
-/**
- * @param {string} queryName
- * @param {string} expectedServerResponse
- */
-Given("server responds {string} with", (queryName, responsePayloadString) => {
-	serverResponseMocks = {
-		...serverResponseMocks,
-		[queryName]: responsePayloadString,
-	};
-});
+Given(
+	"server responds {string} with",
+	/**
+	 * @param {string} queryName
+	 * @param {string} responsePayloadString
+	 */
+	(queryName, responsePayloadString) => {
+		serverResponseMocks = {
+			...serverResponseMocks,
+			[queryName]: responsePayloadString,
+		};
+	},
+);
 
-/**
- * @param {string} requestPayloadString
- */
-Given("the following request comes in", (requestPayloadString) => {
-	const request = new Request("https://server/graphql", {
-		method: "POST",
-		headers: {
-			"Content-Type": "application/json",
-		},
-		body: requestPayloadString,
-	});
+Given(
+	"the following request comes in",
+	/**
+	 * @param {string} requestPayloadString
+	 */
+	(requestPayloadString) => {
+		const request = new Request("https://server/graphql", {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+			},
+			body: requestPayloadString,
+		});
 
-	proxyResponses.push(serverProxy.submitRequest(request));
-});
+		proxyResponses.push(serverProxy.submitRequest(request));
+	},
+);
 
-/**
- * @param {string} requestPayloadString
- */
 Then(
 	"the bundled request should look like this",
+	/**
+	 * @param {string} requestPayloadString
+	 */
 	async (requestPayloadString) => {
 		const [request] = fetchFuncRequests;
 		const actualRequestPayload = await request.clone().json();
@@ -98,25 +104,28 @@ Then(
 	},
 );
 
-/**
- * @param {string} requestPayloadString
- */
-Then("the server should be called with", async (requestPayloadString) => {
-	const [request] = fetchFuncRequests;
-	const actualRequestPayload = await request.clone().json();
-	const expectedRequestPayload = RequestPayload.fromString(
-		requestPayloadString.trim(),
-	).toPlainObject();
+Then(
+	"the server should be called with",
+	/**
+	 * @param {string} requestPayloadString
+	 */
+	async (requestPayloadString) => {
+		const [request] = fetchFuncRequests;
+		const actualRequestPayload = await request.clone().json();
+		const expectedRequestPayload = RequestPayload.fromString(
+			requestPayloadString.trim(),
+		).toPlainObject();
 
-	expect(actualRequestPayload).toEqual(expectedRequestPayload);
-});
+		expect(actualRequestPayload).toEqual(expectedRequestPayload);
+	},
+);
 
-/**
- * @param {number} times
- * @param {string} requestPayloadString
- */
 Then(
 	"the server should also be called {int} times with",
+	/**
+	 * @param {number} times
+	 * @param {string} requestPayloadString
+	 */
 	async (times, requestPayloadString) => {
 		let matchingRequests = 0;
 
@@ -135,12 +144,12 @@ Then(
 	},
 );
 
-/**
- * @param {number} requestNumber
- * @param {string} expectedResponseBodyString
- */
 Then(
 	"request number {int} should be responded with",
+	/**
+	 * @param {number} requestNumber
+	 * @param {string} expectedResponseBodyString
+	 */
 	async (requestNumber, expectedResponseBodyString) => {
 		const response = await proxyResponses[requestNumber - 1];
 		const responseBody = await response.json();

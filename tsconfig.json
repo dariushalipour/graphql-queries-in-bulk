@@ -12,7 +12,9 @@
 		"resolveJsonModule": true,
 		"isolatedModules": true,
 		"moduleDetection": "force",
-		"noEmit": true,
+		"declaration": true,
+		"declarationDir": "./dist/types",
+		"emitDeclarationOnly": true,
 
 		/* Linting */
 		"strict": true,
@@ -21,5 +23,6 @@
 		"noFallthroughCasesInSwitch": true,
 		"checkJs": true
 	},
-	"include": ["src", "features"]
+	"include": ["src", "features"],
+	"exclude": ["node_modules", "dist"]
 }
