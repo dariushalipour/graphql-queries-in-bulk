@@ -18,7 +18,8 @@
 		"dev": "bunx --bun vite",
 		"build": "bunx --bun tsc && bunx --bun vite build",
 		"cucumber": "bunx --bun cucumber-js",
-		"preview": "bunx --bun vite preview"
+		"preview": "bunx --bun vite preview",
+		"lint": "bunx --bun biome check --write"
 	},
 	"devDependencies": {
 		"@apollo/server": "^4.10.4",

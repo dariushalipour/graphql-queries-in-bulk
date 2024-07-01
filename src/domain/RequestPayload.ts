@@ -1,19 +1,20 @@
 import {
+	type DefinitionNode,
+	type DocumentNode,
 	type FieldNode,
+	type FragmentDefinitionNode,
 	Kind,
+	type OperationDefinitionNode,
+	type SelectionSetNode,
+	type VariableDefinitionNode,
+	type VariableNode,
 	parse,
 	print,
 	visit,
-	type DocumentNode,
-	type OperationDefinitionNode,
-	type VariableNode,
-	type VariableDefinitionNode,
-	type FragmentDefinitionNode,
-	type SelectionSetNode,
 } from "graphql";
-import type { VariableValue } from "./VariableValue";
-import type { SourceMap } from "./SourceMap";
 import type { JsonObject } from "./JsonObject";
+import type { SourceMap } from "./SourceMap";
+import type { VariableValue } from "./VariableValue";
 
 type RequestPayloadPlainObject = {
 	operationName?: string;
@@ -34,7 +35,8 @@ export class RequestPayload {
 		name: string,
 	): FragmentDefinitionNode {
 		const fragmentDefinitionNode = documentNode.definitions.find(
-			(def) => def.kind === Kind.FRAGMENT_DEFINITION && def.name.value === name,
+			(def: DefinitionNode) =>
+				def.kind === Kind.FRAGMENT_DEFINITION && def.name.value === name,
 		);
 
 		if (!fragmentDefinitionNode) {
@@ -85,7 +87,7 @@ export class RequestPayload {
 		return {
 			...documentNodeWithInlineFragments,
 			definitions: documentNodeWithInlineFragments.definitions.filter(
-				(def) => def.kind !== Kind.FRAGMENT_DEFINITION,
+				(def: DefinitionNode) => def.kind !== Kind.FRAGMENT_DEFINITION,
 			),
 		};
 	}
@@ -107,7 +109,7 @@ export class RequestPayload {
 		documentNode: DocumentNode = this.documentNode,
 	): OperationDefinitionNode {
 		const definition = documentNode.definitions.find(
-			(def) => def.kind === Kind.OPERATION_DEFINITION,
+			(def: DefinitionNode) => def.kind === Kind.OPERATION_DEFINITION,
 		);
 
 		if (!definition) {

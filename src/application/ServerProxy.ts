@@ -1,23 +1,25 @@
-import { type DebouncedFunc, debounce, omitBy, isUndefined } from "lodash";
-import { RequestBundler } from "../domain/RequestBundler";
+import { type DebouncedFunc, debounce, isUndefined, omitBy } from "lodash";
 import type { JsonObject } from "../domain/JsonObject";
+import { RequestBundler } from "../domain/RequestBundler";
 import { RequestPayload } from "../domain/RequestPayload";
 
-type ServerProxyOptions = {
+type ProxyOptions = {
 	bundlingIntervalMs: number;
 	fetchFunc: typeof fetch;
 };
 
+type ProxyTask = {
+	request: Request;
+	resolve: (response: Response) => void;
+	reject: (error: Error) => void;
+};
+
 export class ServerProxy {
 	private readonly fetchFunc: typeof fetch;
-	private requests: {
-		request: Request;
-		resolve: (response: Response) => void;
-		reject: (error: Error) => void;
-	}[] = [];
+	private tasks: ProxyTask[] = [];
 	private softExecute: DebouncedFunc<() => Promise<void>>;
 
-	constructor(options: ServerProxyOptions) {
+	constructor(options: ProxyOptions) {
 		this.fetchFunc = options.fetchFunc;
 		this.softExecute = debounce(
 			this.execute.bind(this),
@@ -33,7 +35,7 @@ export class ServerProxy {
 		}
 
 		const promise = new Promise<Response>((resolve, reject) => {
-			this.requests.push({ request, resolve, reject });
+			this.tasks.push({ request, resolve, reject });
 		});
 
 		this.softExecute();
@@ -47,23 +49,23 @@ export class ServerProxy {
 		return payload.canGetNamespaced();
 	}
 
-	private popAllRequests() {
-		const requests = [...this.requests];
-		this.requests = [];
-		return { requests };
+	private popAllTasks() {
+		const tasks = [...this.tasks];
+		this.tasks = [];
+		return { tasks };
 	}
 
 	private async execute(): Promise<void> {
-		const { requests } = this.popAllRequests();
+		const { tasks } = this.popAllTasks();
 
-		if (requests.length === 0) {
+		if (tasks.length === 0) {
 			return;
 		}
 
-		const [sampleRequest] = requests;
+		const [sampleRequest] = tasks;
 
 		const payloads = await Promise.all(
-			requests.map(({ request }) => request.clone().text()),
+			tasks.map(({ request }) => request.clone().text()),
 		);
 
 		const { output, sourceMap } = new RequestBundler(payloads).execute();
@@ -82,7 +84,7 @@ export class ServerProxy {
 		} = await response.json();
 
 		if (responseBody.data) {
-			requests.forEach(({ resolve }, requestIndex) => {
+			tasks.forEach(({ resolve }, requestIndex) => {
 				const data = sourceMap.getSourceResponseData(
 					String(requestIndex),
 					responseBody.data ?? {},
@@ -100,7 +102,7 @@ export class ServerProxy {
 				resolve(new Response(scopedResponseBody));
 			});
 		} else {
-			for (const { request, resolve, reject } of requests) {
+			for (const { request, resolve, reject } of tasks) {
 				this.fetchFunc(request).then(resolve, reject);
 			}
 		}

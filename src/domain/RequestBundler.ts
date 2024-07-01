@@ -1,13 +1,13 @@
-import gql from "graphql-tag";
 import {
-	print,
 	type DocumentNode,
 	type OperationDefinitionNode,
+	print,
 } from "graphql";
+import gql from "graphql-tag";
+import { isNil, omitBy } from "lodash";
 import type { BundledRequest } from "./BundledRequest";
 import { RequestPayload } from "./RequestPayload";
 import { SourceMap } from "./SourceMap";
-import { isNil, omitBy } from "lodash";
 
 export class RequestBundler {
 	private readonly payloads: RequestPayload[];

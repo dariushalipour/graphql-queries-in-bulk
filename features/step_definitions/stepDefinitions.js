@@ -1,8 +1,8 @@
 import { expect, mock } from "bun:test";
-import { RequestPayload } from "../../src/domain/RequestPayload.js";
-import { Given, When, Then, Before } from "@cucumber/cucumber";
-import { ServerProxy } from "../../src/application/ServerProxy.js";
+import { Before, Given, Then, When } from "@cucumber/cucumber";
 import { isEqual } from "lodash";
+import { ServerProxy } from "../../src/application/ServerProxy.js";
+import { RequestPayload } from "../../src/domain/RequestPayload.js";
 
 /**
  * @type {ServerProxy}
