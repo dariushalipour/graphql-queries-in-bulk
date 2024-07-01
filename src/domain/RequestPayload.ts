@@ -8,6 +8,8 @@ import {
 	type OperationDefinitionNode,
 	type VariableNode,
 	type VariableDefinitionNode,
+	type FragmentDefinitionNode,
+	type SelectionSetNode,
 } from "graphql";
 import type { VariableValue } from "./VariableValue";
 import type { SourceMap } from "./SourceMap";
@@ -27,12 +29,60 @@ export class RequestPayload {
 		public readonly sourceMap: SourceMap | null,
 	) {}
 
+	private static getFragmentDefinitionByName(
+		documentNode: DocumentNode,
+		name: string,
+	): FragmentDefinitionNode {
+		const fragmentDefinitionNode = documentNode.definitions.find(
+			(def) => def.kind === Kind.FRAGMENT_DEFINITION && def.name.value === name,
+		);
+
+		if (!fragmentDefinitionNode) {
+			throw new Error(`Fragment "${name}" not found.`);
+		}
+
+		return fragmentDefinitionNode as FragmentDefinitionNode;
+	}
+
+	private static withInlinedFragments(
+		documentNode: DocumentNode,
+	): DocumentNode {
+		const documentNodeWithInlineFragments = visit(documentNode, {
+			SelectionSet: (selectionSetNode) => {
+				return {
+					...selectionSetNode,
+					selections: selectionSetNode.selections.flatMap((node) => {
+						if (node.kind === Kind.FRAGMENT_SPREAD) {
+							const fragmentDef = RequestPayload.getFragmentDefinitionByName(
+								documentNode,
+								node.name.value,
+							);
+
+							return [...fragmentDef.selectionSet.selections];
+						}
+
+						return [node];
+					}),
+				} as SelectionSetNode;
+			},
+		});
+
+		return {
+			...documentNodeWithInlineFragments,
+			definitions: documentNodeWithInlineFragments.definitions.filter(
+				(def) => def.kind !== Kind.FRAGMENT_DEFINITION,
+			),
+		};
+	}
+
 	public static fromString(payloadString: string): RequestPayload {
 		const { operationName, query, variables } = JSON.parse(payloadString);
 
+		const documentNode = RequestPayload.withInlinedFragments(parse(query));
+
 		return new RequestPayload(
 			operationName ?? null,
-			parse(query),
+			documentNode,
 			variables ?? null,
 			null,
 		);
