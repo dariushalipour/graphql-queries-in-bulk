@@ -49,20 +49,35 @@ export class RequestPayload {
 	): DocumentNode {
 		const documentNodeWithInlineFragments = visit(documentNode, {
 			SelectionSet: (selectionSetNode) => {
+				const selections = selectionSetNode.selections.flatMap((node) => {
+					if (node.kind === Kind.FRAGMENT_SPREAD) {
+						const fragmentDef = RequestPayload.getFragmentDefinitionByName(
+							documentNode,
+							node.name.value,
+						);
+
+						return [...fragmentDef.selectionSet.selections];
+					}
+
+					return [node];
+				});
+
+				const usedFieldNodes: Record<string, true> = {};
+				const uniqueNodes = [];
+				for (const node of selections) {
+					if (node.kind === Kind.FIELD) {
+						if (!usedFieldNodes[node.name.value]) {
+							usedFieldNodes[node.name.value] = true;
+							uniqueNodes.push(node);
+						}
+					} else {
+						uniqueNodes.push(node);
+					}
+				}
+
 				return {
 					...selectionSetNode,
-					selections: selectionSetNode.selections.flatMap((node) => {
-						if (node.kind === Kind.FRAGMENT_SPREAD) {
-							const fragmentDef = RequestPayload.getFragmentDefinitionByName(
-								documentNode,
-								node.name.value,
-							);
-
-							return [...fragmentDef.selectionSet.selections];
-						}
-
-						return [node];
-					}),
+					selections: uniqueNodes,
 				} as SelectionSetNode;
 			},
 		});

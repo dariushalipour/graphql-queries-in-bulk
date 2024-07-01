@@ -187,7 +187,7 @@ Feature: ServerProxy
       """json
       {
       "operationName":"QueryWithFragment",
-      "query":"fragment xyz on Xyz {\n  id\n  name\n}\n\nquery QueryWithFragment($id: ID!) {\n  something(id: $id) {\n    color\n    ...xyz  }\n}",
+      "query":"fragment xyz on Xyz {\n  id\n  name\n}\n\nquery QueryWithFragment($id: ID!) {\n  something(id: $id) {\n    id\n    color\n    ...xyz\n    weight\n  }\n}",
       "variables": {"id": "forId"}
       }
       """
@@ -196,7 +196,7 @@ Feature: ServerProxy
       """json
       {
       "operationName":"BundledQuery",
-      "query":"query BundledQuery($r0v0: ID!) {\n  r0f0: something(id: $r0v0) {\n    color\n    id\n    name\n  }\n}",
+      "query":"query BundledQuery($r0v0: ID!) {\n  r0f0: something(id: $r0v0) {\n    id\n    color\n    name\n    weight\n  }\n}",
       "variables": {"r0v0": "forId"}
       }
       """
