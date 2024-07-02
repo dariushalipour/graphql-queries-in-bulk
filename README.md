@@ -18,8 +18,8 @@ Your application only needs the Service Worker. It’s easily installable and re
 import { ServerProxy } from "graphql-queries-in-bulk";
 
 const serverProxy = new ServerProxy({
-	fetchFunc: self.fetch.bind(this),
 	bundlingIntervalMs: 100,
+	bundleRequestCountMax: 10,
 });
 
 self.addEventListener("fetch", (event) => {

@@ -27,13 +27,39 @@ let proxyResponses;
 /**
  * @type {Record<string, string>}
  */
-let serverResponseMocks = {};
+let serverResponseMocks;
+
+/**
+ * @type {number|undefined}
+ */
+let bundleRequestCountMax;
+
+/**
+ * @type {'short'|'with-operation-name'|undefined}
+ */
+let namespacingStrategy;
+
+/**
+ * @type {number}
+ */
+let bundlingIntervalMs = 1 * 1000;
+
+function remakeServerProxy() {
+	serverProxy = new ServerProxy({
+		fetchFunc,
+		bundlingIntervalMs,
+		bundleRequestCountMax,
+		namespacingStrategy,
+	});
+}
 
 Before(() => {
-	const bundlingIntervalMs = 1 * 1000;
 	fetchFuncRequests = [];
 	proxyResponses = [];
 	serverResponseMocks = {};
+	bundlingIntervalMs = 1 * 1000;
+	bundleRequestCountMax = undefined;
+	namespacingStrategy = undefined;
 	fetchFunc = mock(
 		/**
 		 *
@@ -53,7 +79,8 @@ Before(() => {
 			return new Response(serverResponseBody);
 		},
 	);
-	serverProxy = new ServerProxy({ fetchFunc, bundlingIntervalMs });
+
+	remakeServerProxy();
 });
 
 Given(
@@ -88,6 +115,28 @@ Given(
 	},
 );
 
+Given(
+	"bundleRequestCountMax is set to {int}",
+	/**
+	 * @param {number} newValueForBundleRequestCountMax
+	 */
+	(newValueForBundleRequestCountMax) => {
+		bundleRequestCountMax = newValueForBundleRequestCountMax;
+		remakeServerProxy();
+	},
+);
+
+Given(
+	"namespacingStrategy is set to {string}",
+	/**
+	 * @param {'short'|'with-operation-name'} newValueForNamespacingStrategy
+	 */
+	(newValueForNamespacingStrategy) => {
+		namespacingStrategy = newValueForNamespacingStrategy;
+		remakeServerProxy();
+	},
+);
+
 Then(
 	"the bundled request should look like this",
 	/**
@@ -95,6 +144,23 @@ Then(
 	 */
 	async (requestPayloadString) => {
 		const [request] = fetchFuncRequests;
+		const actualRequestPayload = await request.clone().json();
+		const expectedRequestPayload = RequestPayload.fromString(
+			requestPayloadString.trim(),
+		).toPlainObject();
+
+		expect(actualRequestPayload).toEqual(expectedRequestPayload);
+	},
+);
+
+Then(
+	"the bundled request #{int} should look like this",
+	/**
+	 * @param {number} requestIndexPlusOne
+	 * @param {string} requestPayloadString
+	 */
+	async (requestIndexPlusOne, requestPayloadString) => {
+		const request = fetchFuncRequests[requestIndexPlusOne - 1];
 		const actualRequestPayload = await request.clone().json();
 		const expectedRequestPayload = RequestPayload.fromString(
 			requestPayloadString.trim(),

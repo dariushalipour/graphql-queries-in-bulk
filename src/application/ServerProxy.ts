@@ -2,10 +2,17 @@ import { type DebouncedFunc, debounce, isUndefined, omitBy } from "lodash";
 import type { JsonObject } from "../domain/JsonObject";
 import { RequestBundler } from "../domain/RequestBundler";
 import { RequestPayload } from "../domain/RequestPayload";
+import type { NamespacingStrategy } from "../domain/NamespacingStrategy";
+
+const DEFAULT_BUNDLING_INTERVAL_MS = 100;
+const DEFAULT_BUNDLE_REQUEST_COUNT_MAX = 10;
+const DEFAULT_NAMESPACING_STRATEGY = "short";
 
 type ProxyOptions = {
-	bundlingIntervalMs: number;
-	fetchFunc: typeof fetch;
+	bundlingIntervalMs?: number;
+	bundleRequestCountMax?: number;
+	namespacingStrategy?: NamespacingStrategy;
+	fetchFunc?: typeof fetch;
 };
 
 type ProxyTask = {
@@ -16,14 +23,24 @@ type ProxyTask = {
 
 export class ServerProxy {
 	private readonly fetchFunc: typeof fetch;
+	private readonly namespacingStrategy: NamespacingStrategy;
+	private readonly bundleRequestCountMax: number;
 	private tasks: ProxyTask[] = [];
-	private softExecute: DebouncedFunc<() => Promise<void>>;
+	private debouncedExecute: DebouncedFunc<() => Promise<void>>;
 
-	constructor(options: ProxyOptions) {
-		this.fetchFunc = options.fetchFunc;
-		this.softExecute = debounce(
+	constructor(options?: ProxyOptions) {
+		this.namespacingStrategy =
+			options?.namespacingStrategy ?? DEFAULT_NAMESPACING_STRATEGY;
+
+		this.bundleRequestCountMax =
+			options?.bundleRequestCountMax ?? DEFAULT_BUNDLE_REQUEST_COUNT_MAX;
+
+		const fetchFunc = options?.fetchFunc ?? fetch;
+		this.fetchFunc = (...args) => fetchFunc(...args);
+
+		this.debouncedExecute = debounce(
 			this.execute.bind(this),
-			options.bundlingIntervalMs,
+			options?.bundlingIntervalMs ?? DEFAULT_BUNDLING_INTERVAL_MS,
 		);
 	}
 
@@ -38,7 +55,11 @@ export class ServerProxy {
 			this.tasks.push({ request, resolve, reject });
 		});
 
-		this.softExecute();
+		if (this.tasks.length < this.bundleRequestCountMax) {
+			this.debouncedExecute();
+		} else {
+			this.execute();
+		}
 
 		return promise;
 	}
@@ -68,7 +89,10 @@ export class ServerProxy {
 			tasks.map(({ request }) => request.clone().text()),
 		);
 
-		const { output, sourceMap } = new RequestBundler(payloads).execute();
+		const { output, sourceMap } = new RequestBundler(
+			this.namespacingStrategy,
+			payloads,
+		).execute();
 
 		const response = await this.fetchFunc(
 			new Request(sampleRequest.request.url, {
@@ -109,7 +133,7 @@ export class ServerProxy {
 	}
 
 	public forceExecute(): Promise<void> {
-		this.softExecute.cancel();
+		this.debouncedExecute.cancel();
 		return this.execute();
 	}
 }

@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.2.4] - 2024-07-03
+
+### Added
+- `bundleRequestCountMax` option to make the http call before the interval if the request count hits
+- `namespacingStrategy` option `with-operation-name` as an opt-in feature to simplify debugging customer applications by making it easier to check query logs.
+
+### Fixed
+- unifying same-name fields, even if they had different aliases
+- fetchFunc needed to be bound to the right context
+
 ## [1.0.2] - 2024-07-01
 
 ### Fixed

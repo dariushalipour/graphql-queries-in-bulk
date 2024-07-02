@@ -1,4 +1,5 @@
 import type { JsonObject } from "./JsonObject";
+import type { NamespacingStrategy } from "./NamespacingStrategy";
 
 export class SourceMap {
 	private variables: {
@@ -9,11 +10,38 @@ export class SourceMap {
 		[requestId: string]: { source: string; namespaced: string }[];
 	} = {};
 
-	newNamespacedFieldName(requestId: string, sourceFieldName: string): string {
-		const requestFields = this.fields[requestId] ?? [];
-		const fieldId = requestFields.length;
+	constructor(private readonly namespacingStrategy: NamespacingStrategy) {}
 
-		const namespaced = ["r", requestId, "f", fieldId].join("");
+	private makeFieldName(
+		operationName: string | null,
+		requestId: string,
+		fieldId: string,
+	): string {
+		const ending = ["r", requestId, "f", fieldId].join("");
+		if (this.namespacingStrategy === "short") {
+			return ending;
+		}
+
+		if (this.namespacingStrategy === "with-operation-name") {
+			return [operationName, ending].filter(Boolean).join("_");
+		}
+
+		this.namespacingStrategy satisfies never;
+
+		throw new TypeError(
+			`unknown namespacingStrategy: "${this.namespacingStrategy}"`,
+		);
+	}
+
+	newNamespacedFieldName(
+		operationName: string | null,
+		requestId: string,
+		sourceFieldName: string,
+	): string {
+		const requestFields = this.fields[requestId] ?? [];
+		const fieldId = String(requestFields.length);
+
+		const namespaced = this.makeFieldName(operationName, requestId, fieldId);
 
 		this.fields = {
 			...this.fields,
@@ -23,7 +51,29 @@ export class SourceMap {
 		return namespaced;
 	}
 
+	private makeVariableName(
+		operationName: string | null,
+		requestId: string,
+		variableId: string,
+	): string {
+		const ending = ["r", requestId, "v", variableId].join("");
+		if (this.namespacingStrategy === "short") {
+			return ending;
+		}
+
+		if (this.namespacingStrategy === "with-operation-name") {
+			return [operationName, ending].filter(Boolean).join("_");
+		}
+
+		this.namespacingStrategy satisfies never;
+
+		throw new TypeError(
+			`unknown namespacingStrategy: "${this.namespacingStrategy}"`,
+		);
+	}
+
 	getNamespacedVariableName(
+		operationName: string | null,
 		requestId: string,
 		sourceVariableName: string,
 	): string {
@@ -37,9 +87,13 @@ export class SourceMap {
 			return alreadyExisting.namespaced;
 		}
 
-		const variableId = requestVariables.length;
+		const variableId = String(requestVariables.length);
 
-		const namespaced = ["r", requestId, "v", variableId].join("");
+		const namespaced = this.makeVariableName(
+			operationName,
+			requestId,
+			variableId,
+		);
 
 		this.variables = {
 			...this.variables,

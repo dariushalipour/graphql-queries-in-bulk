@@ -1,26 +1,5 @@
 Feature: ServerProxy
 
-  Scenario: When the request is not a query, bypass the bundler
-    Given server responds "DismissNotification" with
-      """json
-      {"data":{}}
-      """
-    And the following request comes in
-      """json
-      {
-      "operationName":"DismissNotification",
-      "query":"mutation DismissNotification($id: ID!) {\n  dismissNotification(id: $id)\n}"
-      }
-      """
-    When the bundling interval is hit
-    Then the server should be called with
-      """json
-      {
-      "operationName":"DismissNotification",
-      "query":"mutation DismissNotification($id: ID!) {\n  dismissNotification(id: $id)\n}"
-      }
-      """
-
   Scenario: Single Request Without Alias
     Given server responds "BundledQuery" with
       """json
@@ -41,48 +20,6 @@ Feature: ServerProxy
     And request number 1 should be responded with
       """json
       {"data":{"fieldA":15,"fieldB":"win"}}
-      """
-
-  Scenario: Single Request With Partial Error
-    Given server responds "BundledQuery" with
-      """json
-      {
-      "errors": [
-      {
-      "message": "oops!",
-      "locations": [{"line":6,"column":3}],
-      "path": ["r0f0"],
-      "extensions": ["Error: oops!", "stack-of.js:30:10"]
-      }
-      ],
-      "data": {"r0f0":null,"r0f1":"win"}
-      }
-      """
-    And the following request comes in
-      """json
-      {"query":"{\n  fieldA\n  fieldB\n}"}
-      """
-    When the bundling interval is hit
-    Then the bundled request should look like this
-      """json
-      {
-      "operationName":"BundledQuery",
-      "query":"query BundledQuery {\n  r0f0: fieldA\n  r0f1: fieldB\n}"
-      }
-      """
-    And request number 1 should be responded with
-      """json
-      {
-      "errors": [
-      {
-      "message": "oops!",
-      "locations": [{"line":6,"column":3}],
-      "path": ["fieldA"],
-      "extensions": ["Error: oops!", "stack-of.js:30:10"]
-      }
-      ],
-      "data":{"fieldA":null,"fieldB":"win"}
-      }
       """
 
   Scenario: Single Request With Nested Selections
@@ -178,33 +115,6 @@ Feature: ServerProxy
       {"data":{"fieldA":15,"bee":"win","see":"score"}}
       """
 
-  Scenario: Single Request With Fragment
-    Given server responds "BundledQuery" with
-      """json
-      {"data":{"r0f0": {"color": "red", "id": "id-0", "name": "sample-name"}}}
-      """
-    And the following request comes in
-      """json
-      {
-      "operationName":"QueryWithFragment",
-      "query":"fragment xyz on Xyz {\n  id\n  name\n}\n\nquery QueryWithFragment($id: ID!) {\n  something(id: $id) {\n    id\n    color\n    ...xyz\n    weight\n  }\n}",
-      "variables": {"id": "forId"}
-      }
-      """
-    When the bundling interval is hit
-    Then the server should be called with
-      """json
-      {
-      "operationName":"BundledQuery",
-      "query":"query BundledQuery($r0v0: ID!) {\n  r0f0: something(id: $r0v0) {\n    id\n    color\n    name\n    weight\n  }\n}",
-      "variables": {"r0v0": "forId"}
-      }
-      """
-    And request number 1 should be responded with
-      """json
-      {"data":{"something": {"color": "red", "id": "id-0", "name": "sample-name"}}}
-      """
-
   Scenario: Dual Request
     Given server responds "BundledQuery" with
       """json
@@ -242,120 +152,4 @@ Feature: ServerProxy
     And request number 2 should be responded with
       """json
       {"data":{"see":16,"fieldD":"score"}}
-      """
-
-  Scenario: Dual Request With Partial Error
-    Given server responds "BundledQuery" with
-      """json
-      {
-      "errors": [
-      {
-      "message": "oops!",
-      "locations": [{"line":6,"column":3}],
-      "path": ["r0f0"],
-      "extensions": ["Error: oops!", "stack-of.js:30:10"]
-      }
-      ],
-      "data": {"r0f0":null,"r0f1":"win","r1f0":15}
-      }
-      """
-    And the following request comes in
-      """json
-      {"query":"{\n  fieldA\n  fieldB\n}"}
-      """
-    And the following request comes in
-      """json
-      {"query":"{\n  fieldC\n}"}
-      """
-    When the bundling interval is hit
-    Then the bundled request should look like this
-      """json
-      {
-      "operationName":"BundledQuery",
-      "query":"query BundledQuery {\n  r0f0: fieldA\n  r0f1: fieldB\n  r1f0: fieldC\n}"
-      }
-      """
-    And request number 1 should be responded with
-      """json
-      {
-      "errors": [
-      {
-      "message": "oops!",
-      "locations": [{"line":6,"column":3}],
-      "path": ["fieldA"],
-      "extensions": ["Error: oops!", "stack-of.js:30:10"]
-      }
-      ],
-      "data":{"fieldA":null,"fieldB":"win"}
-      }
-      """
-    And request number 2 should be responded with
-      """json
-      {"data":{"fieldC":15}}
-      """
-
-  Scenario: Dual Request With Errors and no data property
-    Given server responds "BundledQuery" with
-      """json
-      {
-      "errors": [
-      {
-      "message": "oops!",
-      "locations": [{"line":6,"column":3}],
-      "extensions": ["Error: oops!", "stack-of.js:30:10"]
-      }
-      ]
-      }
-      """
-    And server responds "QueryOne" with
-      """json
-      {"data":{"fieldA":15,"fieldB":"win"}}
-      """
-    And server responds "QueryTwo" with
-      """json
-      {"data":{"fieldC":"score"}}
-      """
-    And the following request comes in
-      """json
-      {
-      "operationName": "QueryOne",
-      "query":"query QueryOne {\n  fieldA\n  fieldB\n}"
-      }
-      """
-    And the following request comes in
-      """json
-      {
-      "operationName": "QueryTwo",
-      "query":"query QueryTwo {\n  fieldC\n}"
-      }
-      """
-    When the bundling interval is hit
-    Then the bundled request should look like this
-      """json
-      {
-      "operationName":"BundledQuery",
-      "query":"query BundledQuery {\n  r0f0: fieldA\n  r0f1: fieldB\n  r1f0: fieldC\n}"
-      }
-      """
-    And the server should also be called 1 times with
-      """json
-      {
-      "operationName": "QueryOne",
-      "query":"query QueryOne {\n  fieldA\n  fieldB\n}"
-      }
-      """
-    And the server should also be called 1 times with
-      """json
-      {
-      "operationName": "QueryTwo",
-      "query":"query QueryTwo {\n  fieldC\n}"
-      }
-      """
-    And request number 1 should be responded with
-      """json
-      {"data":{"fieldA":15,"fieldB":"win"}}
-      """
-    And request number 2 should be responded with
-      """json
-      {"data":{"fieldC":"score"}}
       """

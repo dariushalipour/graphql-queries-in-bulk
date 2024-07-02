@@ -3,7 +3,7 @@
 	"description": "Intercepts GraphQL network calls to bundle and debounce requests.",
 	"private": false,
 	"license": "Apache-2.0",
-	"version": "1.0.2",
+	"version": "1.2.4",
 	"type": "module",
 	"main": "./dist/graphql-queries-in-bulk.umd.cjs",
 	"module": "./dist/graphql-queries-in-bulk.js",
@@ -35,7 +35,6 @@
 		"@types/bun": "^1.1.6",
 		"@types/lodash": "^4.17.6",
 		"graphql": "^16.9.0",
-		"graphql-tag": "^2.12.6",
 		"lodash": "^4.17.21",
 		"typescript": "^5.2.2",
 		"vite": "^5.3.1"

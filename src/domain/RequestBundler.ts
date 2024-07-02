@@ -2,19 +2,25 @@ import {
 	type DocumentNode,
 	type OperationDefinitionNode,
 	print,
+	parse,
 } from "graphql";
-import gql from "graphql-tag";
 import { isNil, omitBy } from "lodash";
 import type { BundledRequest } from "./BundledRequest";
 import { RequestPayload } from "./RequestPayload";
 import { SourceMap } from "./SourceMap";
 import type { VariableValue } from "./VariableValue";
+import type { NamespacingStrategy } from "./NamespacingStrategy";
 
 export class RequestBundler {
 	private readonly payloads: RequestPayload[];
-	private readonly sourceMap: SourceMap = new SourceMap();
+	private readonly sourceMap: SourceMap;
 
-	constructor(RequestPayloads: string[]) {
+	constructor(
+		private readonly namespacingStrategy: NamespacingStrategy,
+		RequestPayloads: string[],
+	) {
+		this.sourceMap = new SourceMap(this.namespacingStrategy);
+
 		this.payloads = RequestPayloads.map((x, requestIndex) =>
 			RequestPayload.fromString(x).namespaced(
 				String(requestIndex),
@@ -23,12 +29,32 @@ export class RequestBundler {
 		);
 	}
 
-	private bundleDocuments(): DocumentNode {
-		const sampleDocument = gql`
-		query BundledQuery($y: String!) {
-			x
+	private getBundledOperationName(): string {
+		const constantName = "BundledQuery";
+
+		if (this.namespacingStrategy === "short") {
+			return constantName;
 		}
-		`;
+
+		if (this.namespacingStrategy === "with-operation-name") {
+			return [
+				constantName,
+				...this.payloads.map((p) => p.getOperationName()).filter(Boolean),
+			].join("_");
+		}
+
+		this.namespacingStrategy satisfies never;
+
+		throw new TypeError(
+			`unknown namespacingStrategy: "${this.namespacingStrategy}"`,
+		);
+	}
+
+	private bundleDocuments(): DocumentNode {
+		const sampleDocument = parse(`
+		query ${this.getBundledOperationName()}($y: String!) {
+			x
+		}`);
 
 		return {
 			...sampleDocument,
@@ -66,7 +92,7 @@ export class RequestBundler {
 
 	execute(): BundledRequest {
 		const output = {
-			operationName: "BundledQuery",
+			operationName: this.getBundledOperationName(),
 			query: print(this.bundleDocuments()),
 			variables: this.bundleVariables(),
 		};

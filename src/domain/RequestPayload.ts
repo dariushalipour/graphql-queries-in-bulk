@@ -68,8 +68,9 @@ export class RequestPayload {
 				const uniqueNodes = [];
 				for (const node of selections) {
 					if (node.kind === Kind.FIELD) {
-						if (!usedFieldNodes[node.name.value]) {
-							usedFieldNodes[node.name.value] = true;
+						const name = node.alias?.value ?? node.name.value;
+						if (!usedFieldNodes[name]) {
+							usedFieldNodes[name] = true;
 							uniqueNodes.push(node);
 						}
 					} else {
@@ -119,8 +120,8 @@ export class RequestPayload {
 		return definition as OperationDefinitionNode;
 	}
 
-	getOperationName(): string | null {
-		return this.getOperationDefinition().name?.value ?? null;
+	getOperationName(documentNode?: DocumentNode): string | null {
+		return this.getOperationDefinition(documentNode).name?.value ?? null;
 	}
 
 	private isQuery(): boolean {
@@ -156,13 +157,16 @@ export class RequestPayload {
 		requestId: string,
 		sourceMap: SourceMap,
 	): DocumentNode {
+		const operationName = this.getOperationName(documentNode);
+
 		return visit(documentNode, {
-			Variable(node: VariableNode): VariableNode {
+			Variable: (node: VariableNode): VariableNode => {
 				return {
 					...node,
 					name: {
 						kind: Kind.NAME,
 						value: sourceMap.getNamespacedVariableName(
+							operationName,
 							requestId,
 							node.name.value,
 						),
@@ -178,6 +182,7 @@ export class RequestPayload {
 		sourceMap: SourceMap,
 	): DocumentNode {
 		const operationDef = this.getOperationDefinition(documentNode);
+		const operationName = this.getOperationName(documentNode);
 
 		return {
 			...documentNode,
@@ -191,6 +196,7 @@ export class RequestPayload {
 							alias: {
 								kind: Kind.NAME,
 								value: sourceMap.newNamespacedFieldName(
+									operationName,
 									requestId,
 									node.alias?.value ?? node.name.value,
 								),
@@ -211,11 +217,13 @@ export class RequestPayload {
 			this.documentNode,
 		);
 
+		const operationName = this.getOperationName(namespacedDocument);
+
 		const namespacedVariables =
 			this.variables &&
 			Object.fromEntries(
 				Object.entries(this.variables).map(([key, value]) => [
-					sourceMap.getNamespacedVariableName(requestId, key),
+					sourceMap.getNamespacedVariableName(operationName, requestId, key),
 					value,
 				]),
 			);
