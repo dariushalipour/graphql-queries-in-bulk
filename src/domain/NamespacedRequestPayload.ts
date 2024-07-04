@@ -140,7 +140,8 @@ export class NamespacedRequestPayload {
 		if (selection.kind === Kind.FIELD) {
 			const aliasValue = sourceMap.newNamespacedFieldName(
 				operationName,
-				selection.alias?.value ?? selection.name.value,
+				selection.alias?.value ?? null,
+				selection.name.value,
 			);
 
 			return {

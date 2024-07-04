@@ -7,7 +7,7 @@ import { RequestPayload } from "../domain/RequestPayload";
 
 const DEFAULT_BUNDLING_INTERVAL_MS = 100;
 const DEFAULT_BUNDLE_REQUEST_COUNT_MAX = 10;
-const DEFAULT_NAMESPACING_STRATEGY = "short";
+const DEFAULT_NAMESPACING_STRATEGY = "sufficient" satisfies NamespacingStrategy;
 
 type ProxyOptions = {
 	bundlingIntervalMs?: number;

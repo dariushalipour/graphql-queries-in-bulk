@@ -1,1 +1,1 @@
-export type NamespacingStrategy = "short" | "with-operation-name";
+export type NamespacingStrategy = "short" | "sufficient" | "verbose";

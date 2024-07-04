@@ -38,7 +38,7 @@ Feature: Keep Bundles Less Than This Many Queries
 
   Scenario: Breaks the requests into two bundles
     Given bundleRequestCountMax is set to 3
-    And namespacingStrategy is set to "with-operation-name"
+    And namespacingStrategy is set to "verbose"
     And server responds "BundledQuery_QueryOne_QueryTwo_QueryThree" with
       """json
       {"data":{

@@ -22,18 +22,18 @@ Feature: Embedding Fragments
       }
       """
     When the bundling interval is hit
-    Then the server should be called with a query with variables '{"r0v0": "forId"}' and named "BundledQuery" looking like this
+    Then the server should be called with a query with variables '{"id_r0v0": "forId"}' and named "BundledQuery" looking like this
       """graphql
-      fragment r0fr0 on Xyz {
+      fragment xyz_r0fr0 on Xyz {
         id
         name
       }
       
-      query BundledQuery($r0v0: ID!) {
-        r0f0: something(id: $r0v0) {
+      query BundledQuery($id_r0v0: ID!) {
+        r0f0: something(id: $id_r0v0) {
           id
           color
-          ...r0fr0
+          ...xyz_r0fr0
           weight
         }
       }
@@ -90,33 +90,33 @@ Feature: Embedding Fragments
       }
       """
     When the bundling interval is hit
-    Then the server should be called with a query with variables '{"r0v0": "forId","r1v0": "fruitId-1"}' and named "BundledQuery" looking like this
+    Then the server should be called with a query with variables '{"id_r0v0": "forId","id_r1v0": "fruitId-1"}' and named "BundledQuery" looking like this
       """graphql
-      fragment r0fr0 on Foo {
+      fragment FooPartial_r0fr0 on Foo {
         id
         name
       }
       
-      fragment r0fr1 on Bar {
+      fragment BarPartial_r0fr1 on Bar {
         shape
       }
       
-      fragment r1fr0 on Baz {
+      fragment BazFields_r1fr0 on Baz {
         origin
         expirationDate
       }
       
-      query BundledQuery($r0v0: ID!, $r1v0: ID!) {
-        r0f0: something(id: $r0v0) {
+      query BundledQuery($id_r0v0: ID!, $id_r1v0: ID!) {
+        r0f0: something(id: $id_r0v0) {
           id
           color
-          ...r0fr1
+          ...BarPartial_r0fr1
           weight
-          ...r0fr0
+          ...FooPartial_r0fr0
         }
-        r1f0: something(id: $r1v0) {
+        r1f0: something(id: $id_r1v0) {
           id
-          ...r1fr0
+          ...BazFields_r1fr0
           packaging
         }
       }

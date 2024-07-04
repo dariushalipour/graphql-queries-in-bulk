@@ -35,7 +35,7 @@ let serverResponseMocks;
 let bundleRequestCountMax;
 
 /**
- * @type {'short'|'with-operation-name'|undefined}
+ * @type {'short'|'verbose'|undefined}
  */
 let namespacingStrategy;
 
@@ -205,7 +205,7 @@ Given(
 Given(
 	"namespacingStrategy is set to {string}",
 	/**
-	 * @param {'short'|'with-operation-name'} newValueForNamespacingStrategy
+	 * @param {'short'|'verbose'} newValueForNamespacingStrategy
 	 */
 	(newValueForNamespacingStrategy) => {
 		namespacingStrategy = newValueForNamespacingStrategy;

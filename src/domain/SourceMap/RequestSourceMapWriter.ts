@@ -1,6 +1,7 @@
 export interface RequestSourceMapWriter {
 	newNamespacedFieldName(
 		operationName: string | null,
+		sourceAliasName: string | null,
 		sourceFieldName: string,
 	): string;
 

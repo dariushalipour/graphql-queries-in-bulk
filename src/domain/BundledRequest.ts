@@ -50,7 +50,11 @@ export class BundledRequest {
 			return constantName;
 		}
 
-		if (this.namespacingStrategy === "with-operation-name") {
+		if (this.namespacingStrategy === "sufficient") {
+			return constantName;
+		}
+
+		if (this.namespacingStrategy === "verbose") {
 			return [
 				constantName,
 				...this.requestPayloads
