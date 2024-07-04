@@ -1,6 +1,6 @@
 import { expect, mock } from "bun:test";
 import { Before, Given, Then, When } from "@cucumber/cucumber";
-import { isEqual } from "lodash";
+import { isEqual, isNil, omitBy } from "lodash";
 import { ServerProxy } from "../../src/application/ServerProxy.js";
 import { RequestPayload } from "../../src/domain/RequestPayload.js";
 
@@ -66,6 +66,25 @@ function remakeServerProxy() {
 		bundleRequestCountMax,
 		namespacingStrategy,
 	});
+}
+
+/**
+ *
+ * @param {string} requestPayloadString
+ */
+function parseRequestPayloadString(requestPayloadString) {
+	const { operationName, query, variables } = JSON.parse(
+		requestPayloadString.trim(),
+	);
+
+	return omitBy(
+		{
+			operationName,
+			query,
+			variables: variables && JSON.stringify(variables),
+		},
+		isNil,
+	);
 }
 
 Before(() => {
@@ -203,9 +222,9 @@ Then(
 	async (requestIndexPlusOne, requestPayloadString) => {
 		const request = fetchFuncRequests[requestIndexPlusOne - 1];
 		const actualRequestPayload = await request.clone().json();
-		const expectedRequestPayload = RequestPayload.fromString(
+		const expectedRequestPayload = parseRequestPayloadString(
 			requestPayloadString.trim(),
-		).toPlainObject();
+		);
 
 		expect(actualRequestPayload).toEqual(expectedRequestPayload);
 	},
@@ -221,11 +240,11 @@ Then(
 	async (requestIndexPlusOne, operationName, prettifiedQuery) => {
 		const request = fetchFuncRequests[requestIndexPlusOne - 1];
 		const actualRequestPayload = await request.clone().json();
-		const expectedRequestPayload = RequestPayload.fromString(
-			JSON.stringify({ operationName, query: prettifiedQuery.trim() }),
-		).toPlainObject();
 
-		expect(actualRequestPayload).toEqual(expectedRequestPayload);
+		expect(actualRequestPayload).toEqual({
+			operationName,
+			query: prettifiedQuery.trim(),
+		});
 	},
 );
 
@@ -237,9 +256,8 @@ Then(
 	async (requestPayloadString) => {
 		const [request] = fetchFuncRequests;
 		const actualRequestPayload = await request.clone().json();
-		const expectedRequestPayload = RequestPayload.fromString(
-			requestPayloadString.trim(),
-		).toPlainObject();
+		const expectedRequestPayload =
+			parseRequestPayloadString(requestPayloadString);
 
 		expect(actualRequestPayload).toEqual(expectedRequestPayload);
 	},
@@ -254,11 +272,11 @@ Then(
 	async (operationName, prettifiedQuery) => {
 		const [request] = fetchFuncRequests;
 		const actualRequestPayload = await request.clone().json();
-		const expectedRequestPayload = RequestPayload.fromString(
-			JSON.stringify({ operationName, query: prettifiedQuery.trim() }),
-		).toPlainObject();
 
-		expect(actualRequestPayload).toEqual(expectedRequestPayload);
+		expect(actualRequestPayload).toEqual({
+			operationName,
+			query: prettifiedQuery.trim(),
+		});
 	},
 );
 
@@ -272,15 +290,12 @@ Then(
 	async (variables, operationName, prettifiedQuery) => {
 		const [request] = fetchFuncRequests;
 		const actualRequestPayload = await request.clone().json();
-		const expectedRequestPayload = RequestPayload.fromString(
-			JSON.stringify({
-				operationName,
-				query: prettifiedQuery.trim(),
-				variables: JSON.parse(variables),
-			}),
-		).toPlainObject();
 
-		expect(actualRequestPayload).toEqual(expectedRequestPayload);
+		expect(actualRequestPayload).toEqual({
+			operationName,
+			query: prettifiedQuery.trim(),
+			variables: JSON.stringify(JSON.parse(variables)),
+		});
 	},
 );
 
