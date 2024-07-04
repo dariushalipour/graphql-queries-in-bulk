@@ -6,21 +6,33 @@ Feature: Namespacing Strategy Options
       """json
       {"data":{"One_r0f0":15,"One_r0f1":{"id":"another-id"},"One_r0f2":"win"}}
       """
-    And the following request comes in
-      """json
-      {
-      "operationName": "One",
-      "query":"fragment SubsetFields on Entity {\n  id\n}\n\nquery One($id: ID!) {\n  fieldA(id: $id)\n  fieldB {\n    ...SubsetFields\n  }\n  fieldC\n}",
-      "variables":{"id": "some-id"}
+    And the following prettified request with variables '{"id": "some-id"}' and named "One" comes in
+      """graphql
+      fragment SubsetFields on Entity {
+        id
+      }
+      
+      query One($id: ID!) {
+        fieldA(id: $id)
+        fieldB {
+          ...SubsetFields
+        }
+        fieldC
       }
       """
     When the bundling interval is hit
-    Then the bundled request should look like this
-      """json
-      {
-      "operationName":"BundledQuery_One",
-      "query":"fragment One_SubsetFields_r0fr0 on Entity {\n  id\n}\n\nquery BundledQuery_One($One_r0v0: ID!) {\n  One_r0f0: fieldA(id: $One_r0v0)\n  One_r0f1: fieldB {\n    ...One_SubsetFields_r0fr0\n  }\n  One_r0f2: fieldC\n}",
-      "variables":{"One_r0v0": "some-id"}
+    Then the server should be called with a query with variables '{"One_r0v0": "some-id"}' and named "BundledQuery_One" looking like this
+      """graphql
+      fragment One_SubsetFields_r0fr0 on Entity {
+        id
+      }
+      
+      query BundledQuery_One($One_r0v0: ID!) {
+        One_r0f0: fieldA(id: $One_r0v0)
+        One_r0f1: fieldB {
+          ...One_SubsetFields_r0fr0
+        }
+        One_r0f2: fieldC
       }
       """
     And request number 1 should be responded with
@@ -39,11 +51,11 @@ Feature: Namespacing Strategy Options
       {"query":"{\n  fieldA\n  fieldB\n}"}
       """
     When the bundling interval is hit
-    Then the bundled request should look like this
-      """json
-      {
-      "operationName":"BundledQuery",
-      "query":"query BundledQuery {\n  r0f0: fieldA\n  r0f1: fieldB\n}"
+    Then the server should be called with a query named "BundledQuery" looking like this
+      """graphql
+      query BundledQuery {
+        r0f0: fieldA
+        r0f1: fieldB
       }
       """
     And request number 1 should be responded with

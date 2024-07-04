@@ -5,16 +5,19 @@ Feature: ServerProxy
       """json
       {"data":{"r0f0":15,"r0f1":"win"}}
       """
-    And the following request comes in
-      """json
-      {"query":"{\n  fieldA\n  fieldB\n}"}
+    And the following prettified request comes in
+      """graphql
+      {
+        fieldA
+        fieldB
+      }
       """
     When the bundling interval is hit
-    Then the bundled request should look like this
-      """json
-      {
-      "operationName":"BundledQuery",
-      "query":"query BundledQuery {\n  r0f0: fieldA\n  r0f1: fieldB\n}"
+    Then the server should be called with a query named "BundledQuery" looking like this
+      """graphql
+      query BundledQuery {
+        r0f0: fieldA
+        r0f1: fieldB
       }
       """
     And request number 1 should be responded with
@@ -27,16 +30,23 @@ Feature: ServerProxy
       """json
       {"data":{"r0f0":15,"r0f1":{"result":"win"}}}
       """
-    And the following request comes in
-      """json
-      {"query":"{\n  fieldA\n  fieldB {\n    result\n  }\n}"}
+    And the following prettified request comes in
+      """graphql
+      {
+        fieldA
+        fieldB {
+          result
+        }
+      }
       """
     When the bundling interval is hit
-    Then the bundled request should look like this
-      """json
-      {
-      "operationName":"BundledQuery",
-      "query":"query BundledQuery {\n  r0f0: fieldA\n  r0f1: fieldB {\n    result\n  }\n}"
+    Then the server should be called with a query named "BundledQuery" looking like this
+      """graphql
+      query BundledQuery {
+        r0f0: fieldA
+        r0f1: fieldB {
+          result
+        }
       }
       """
     And request number 1 should be responded with
@@ -49,16 +59,19 @@ Feature: ServerProxy
       """json
       {"data":{"r0f0":15,"r0f1":"win"}}
       """
-    And the following request comes in
-      """json
-      {"query":"{\n  fieldA\n  bee: fieldB\n}"}
+    And the following prettified request comes in
+      """graphql
+      {
+        fieldA
+        bee: fieldB
+      }
       """
     When the bundling interval is hit
-    Then the bundled request should look like this
-      """json
-      {
-      "operationName":"BundledQuery",
-      "query":"query BundledQuery {\n  r0f0: fieldA\n  r0f1: fieldB\n}"
+    Then the server should be called with a query named "BundledQuery" looking like this
+      """graphql
+      query BundledQuery {
+        r0f0: fieldA
+        r0f1: fieldB
       }
       """
     And request number 1 should be responded with
@@ -71,16 +84,19 @@ Feature: ServerProxy
       """json
       {"data":{"r0f0":15,"r0f1":"win"}}
       """
-    And the following request comes in
-      """json
-      {"query":"{\n  fieldA(id: 999)\n  bee: fieldB(id: \"xyz\")\n}"}
+    And the following prettified request comes in
+      """graphql
+      {
+        fieldA(id: 999)
+        bee: fieldB(id: "xyz")
+      }
       """
     When the bundling interval is hit
-    Then the bundled request should look like this
-      """json
-      {
-      "operationName":"BundledQuery",
-      "query":"query BundledQuery {\n  r0f0: fieldA(id: 999)\n  r0f1: fieldB(id: \"xyz\")\n}"
+    Then the server should be called with a query named "BundledQuery" looking like this
+      """graphql
+      query BundledQuery {
+        r0f0: fieldA(id: 999)
+        r0f1: fieldB(id: "xyz")
       }
       """
     And request number 1 should be responded with
@@ -93,21 +109,21 @@ Feature: ServerProxy
       """json
       {"data":{"r0f0":15,"r0f1":"win","r0f2":"score"}}
       """
-    And the following request comes in
-      """json
-      {
-      "operationName": "QueryOne",
-      "query": "query QueryOne($userInput: String!) {\n  fieldA\n  bee: fieldB\n  see: fieldC(input: $userInput)\n}",
-      "variables": {"userInput": "forUserInput"}
+    And the following prettified request with variables '{"userInput": "forUserInput"}' and named "QueryOne" comes in
+      """graphql
+      query QueryOne($userInput: String!) {
+        fieldA
+        bee: fieldB
+        see: fieldC(input: $userInput)
       }
       """
     When the bundling interval is hit
-    Then the bundled request should look like this
-      """json
-      {
-      "operationName": "BundledQuery",
-      "query": "query BundledQuery($r0v0: String!) {\n  r0f0: fieldA\n  r0f1: fieldB\n  r0f2: fieldC(input: $r0v0)\n}",
-      "variables": {"r0v0": "forUserInput"}
+    Then the server should be called with a query with variables '{"r0v0": "forUserInput"}' and named "BundledQuery" looking like this
+      """graphql
+      query BundledQuery($r0v0: String!) {
+        r0f0: fieldA
+        r0f1: fieldB
+        r0f2: fieldC(input: $r0v0)
       }
       """
     And request number 1 should be responded with
@@ -120,29 +136,26 @@ Feature: ServerProxy
       """json
       {"data":{"r0f0":15,"r1f0":16,"r1f1":"score"}}
       """
-    Given the following request comes in
-      """json
-      {
-      "operationName": "QueryOne",
-      "query": "query QueryOne($itemId: String, $filter: Boolean!) {\n  fieldA(filter: $filter, id: $itemId)\n}",
-      "variables": {"itemId": "forItemId", "filter": true}
+    Given the following prettified request with variables '{"itemId": "forItemId", "filter": true}' and named "QueryOne" comes in
+      """graphql
+      query QueryOne($itemId: String, $filter: Boolean!) {
+        fieldA(filter: $filter, id: $itemId)
       }
       """
-    And the following request comes in
-      """json
-      {
-      "operationName":"QueryTwo",
-      "query":"query QueryTwo($filter: String!) {\n  see: fieldC(filter: $filter)\n  fieldD(id: \"xyz\")\n}",
-      "variables": {"filter": "forFilter"}
+    And the following prettified request with variables '{"filter": "forFilter"}' and named "QueryTwo" comes in
+      """graphql
+      query QueryTwo($filter: String!) {
+        see: fieldC(filter: $filter)
+        fieldD(id: "xyz")
       }
       """
     When the bundling interval is hit
-    Then the bundled request should look like this
-      """json
-      {
-      "operationName":"BundledQuery",
-      "query":"query BundledQuery($r0v0: String, $r0v1: Boolean!, $r1v0: String!) {\n  r0f0: fieldA(filter: $r0v1, id: $r0v0)\n  r1f0: fieldC(filter: $r1v0)\n  r1f1: fieldD(id: \"xyz\")\n}",
-      "variables": {"r0v0": "forItemId", "r0v1": true, "r1v0": "forFilter"}
+    Then the server should be called with a query with variables '{"r0v0": "forItemId", "r0v1": true, "r1v0": "forFilter"}' and named "BundledQuery" looking like this
+      """graphql
+      query BundledQuery($r0v0: String, $r0v1: Boolean!, $r1v0: String!) {
+        r0f0: fieldA(filter: $r0v1, id: $r0v0)
+        r1f0: fieldC(filter: $r1v0)
+        r1f1: fieldD(id: "xyz")
       }
       """
     And request number 1 should be responded with

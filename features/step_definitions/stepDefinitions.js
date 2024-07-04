@@ -44,6 +44,21 @@ let namespacingStrategy;
  */
 let bundlingIntervalMs = 1 * 1000;
 
+/**
+ *
+ * @param {string} body
+ * @returns
+ */
+function makeRequest(body) {
+	return new Request("https://server/graphql", {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/json",
+		},
+		body: body,
+	});
+}
+
 function remakeServerProxy() {
 	serverProxy = new ServerProxy({
 		fetchFunc,
@@ -103,13 +118,55 @@ Given(
 	 * @param {string} requestPayloadString
 	 */
 	(requestPayloadString) => {
-		const request = new Request("https://server/graphql", {
-			method: "POST",
-			headers: {
-				"Content-Type": "application/json",
-			},
-			body: requestPayloadString,
-		});
+		const request = makeRequest(requestPayloadString);
+		proxyResponses.push(serverProxy.submitRequest(request));
+	},
+);
+
+Given(
+	"the following prettified request comes in",
+	/**
+	 * @param {string} prettifiedQuery
+	 */
+	(prettifiedQuery) => {
+		const request = makeRequest(
+			JSON.stringify({
+				query: prettifiedQuery.trim(),
+			}),
+		);
+
+		proxyResponses.push(serverProxy.submitRequest(request));
+	},
+);
+
+Given(
+	"the following prettified request named {string} comes in",
+	/**
+	 * @param {string} operationName
+	 * @param {string} prettifiedQuery
+	 */ (operationName, prettifiedQuery) => {
+		const request = makeRequest(
+			JSON.stringify({ operationName, query: prettifiedQuery.trim() }),
+		);
+
+		proxyResponses.push(serverProxy.submitRequest(request));
+	},
+);
+
+Given(
+	"the following prettified request with variables {string} and named {string} comes in",
+	/**
+	 * @param {string} variables
+	 * @param {string} operationName
+	 * @param {string} prettifiedQuery
+	 */ (variables, operationName, prettifiedQuery) => {
+		const request = makeRequest(
+			JSON.stringify({
+				operationName,
+				query: prettifiedQuery.trim(),
+				variables: JSON.parse(variables),
+			}),
+		);
 
 		proxyResponses.push(serverProxy.submitRequest(request));
 	},
@@ -138,22 +195,6 @@ Given(
 );
 
 Then(
-	"the bundled request should look like this",
-	/**
-	 * @param {string} requestPayloadString
-	 */
-	async (requestPayloadString) => {
-		const [request] = fetchFuncRequests;
-		const actualRequestPayload = await request.clone().json();
-		const expectedRequestPayload = RequestPayload.fromString(
-			requestPayloadString.trim(),
-		).toPlainObject();
-
-		expect(actualRequestPayload).toEqual(expectedRequestPayload);
-	},
-);
-
-Then(
 	"the bundled request #{int} should look like this",
 	/**
 	 * @param {number} requestIndexPlusOne
@@ -164,6 +205,24 @@ Then(
 		const actualRequestPayload = await request.clone().json();
 		const expectedRequestPayload = RequestPayload.fromString(
 			requestPayloadString.trim(),
+		).toPlainObject();
+
+		expect(actualRequestPayload).toEqual(expectedRequestPayload);
+	},
+);
+
+Then(
+	"the bundled request #{int} should be named {string} and look like this",
+	/**
+	 * @param {number} requestIndexPlusOne
+	 * @param {string} operationName
+	 * @param {string} prettifiedQuery
+	 */
+	async (requestIndexPlusOne, operationName, prettifiedQuery) => {
+		const request = fetchFuncRequests[requestIndexPlusOne - 1];
+		const actualRequestPayload = await request.clone().json();
+		const expectedRequestPayload = RequestPayload.fromString(
+			JSON.stringify({ operationName, query: prettifiedQuery.trim() }),
 		).toPlainObject();
 
 		expect(actualRequestPayload).toEqual(expectedRequestPayload);
@@ -187,6 +246,45 @@ Then(
 );
 
 Then(
+	"the server should be called with a query named {string} looking like this",
+	/**
+	 * @param {string} operationName
+	 * @param {string} prettifiedQuery
+	 */
+	async (operationName, prettifiedQuery) => {
+		const [request] = fetchFuncRequests;
+		const actualRequestPayload = await request.clone().json();
+		const expectedRequestPayload = RequestPayload.fromString(
+			JSON.stringify({ operationName, query: prettifiedQuery.trim() }),
+		).toPlainObject();
+
+		expect(actualRequestPayload).toEqual(expectedRequestPayload);
+	},
+);
+
+Then(
+	"the server should be called with a query with variables {string} and named {string} looking like this",
+	/**
+	 * @param {string} variables
+	 * @param {string} operationName
+	 * @param {string} prettifiedQuery
+	 */
+	async (variables, operationName, prettifiedQuery) => {
+		const [request] = fetchFuncRequests;
+		const actualRequestPayload = await request.clone().json();
+		const expectedRequestPayload = RequestPayload.fromString(
+			JSON.stringify({
+				operationName,
+				query: prettifiedQuery.trim(),
+				variables: JSON.parse(variables),
+			}),
+		).toPlainObject();
+
+		expect(actualRequestPayload).toEqual(expectedRequestPayload);
+	},
+);
+
+Then(
 	"the server should also be called {int} times with",
 	/**
 	 * @param {number} times
@@ -199,6 +297,31 @@ Then(
 			const actualRequestPayload = await request.clone().json();
 			const expectedRequestPayload = RequestPayload.fromString(
 				requestPayloadString.trim(),
+			).toPlainObject();
+
+			if (isEqual(actualRequestPayload, expectedRequestPayload)) {
+				matchingRequests++;
+			}
+		}
+
+		expect(matchingRequests).toEqual(times);
+	},
+);
+
+Then(
+	"the server should also be called {int} times with a query named {string} looking like this",
+	/**
+	 * @param {number} times
+	 * @param {string} operationName
+	 * @param {string} prettifiedQuery
+	 */
+	async (times, operationName, prettifiedQuery) => {
+		let matchingRequests = 0;
+
+		for (const request of fetchFuncRequests) {
+			const actualRequestPayload = await request.clone().json();
+			const expectedRequestPayload = RequestPayload.fromString(
+				JSON.stringify({ operationName, query: prettifiedQuery.trim() }),
 			).toPlainObject();
 
 			if (isEqual(actualRequestPayload, expectedRequestPayload)) {

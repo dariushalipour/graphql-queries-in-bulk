@@ -5,21 +5,37 @@ Feature: Embedding Fragments
       """json
       {"data":{"r0f0": {"color": "red", "id": "id-0", "name": "sample-name"}}}
       """
-    And the following request comes in
-      """json
-      {
-      "operationName":"QueryWithFragment",
-      "query":"fragment xyz on Xyz {\n  id\n  name\n}\n\nquery QueryWithFragment($id: ID!) {\n  something(id: $id) {\n    id\n    color\n    ...xyz\n    weight\n  }\n}",
-      "variables": {"id": "forId"}
+    And the following prettified request with variables '{"id": "forId"}' and named "QueryWithFragment" comes in
+      """graphql
+      fragment xyz on Xyz {
+        id
+        name
+      }
+      
+      query QueryWithFragment($id: ID!) {
+        something(id: $id) {
+          id
+          color
+          ...xyz
+          weight
+        }
       }
       """
     When the bundling interval is hit
-    Then the server should be called with
-      """json
-      {
-      "operationName":"BundledQuery",
-      "query":"fragment r0fr0 on Xyz {\n  id\n  name\n}\n\nquery BundledQuery($r0v0: ID!) {\n  r0f0: something(id: $r0v0) {\n    id\n    color\n    ...r0fr0\n    weight\n  }\n}",
-      "variables": {"r0v0": "forId"}
+    Then the server should be called with a query with variables '{"r0v0": "forId"}' and named "BundledQuery" looking like this
+      """graphql
+      fragment r0fr0 on Xyz {
+        id
+        name
+      }
+      
+      query BundledQuery($r0v0: ID!) {
+        r0f0: something(id: $r0v0) {
+          id
+          color
+          ...r0fr0
+          weight
+        }
       }
       """
     And request number 1 should be responded with
@@ -37,29 +53,72 @@ Feature: Embedding Fragments
         }
       }
       """
-    And the following request comes in
-      """json
-      {
-      "operationName":"One",
-      "query":"fragment FooPartial on Foo {\n  id\n  name\n}\n\nfragment BarPartial on Bar {\n  shape\n}\n\nquery One($id: ID!) {\n  something(id: $id) {\n    id\n    color\n    ...BarPartial\n    weight\n    ...FooPartial\n  }\n}",
-      "variables": {"id": "forId"}
+    And the following prettified request with variables '{"id": "forId"}' and named "One" comes in
+      """graphql
+      fragment FooPartial on Foo {
+        id
+        name
+      }
+      
+      fragment BarPartial on Bar {
+        shape
+      }
+      
+      query One($id: ID!) {
+        something(id: $id) {
+          id
+          color
+          ...BarPartial
+          weight
+          ...FooPartial
+        }
       }
       """
-    And the following request comes in
-      """json
-      {
-      "operationName":"Two",
-      "query":"query Two($id: ID!) {\n  something(id: $id) {\n    id\n    ...BazFields\n    packaging\n  }\n}\n\nfragment BazFields on Baz {\n  origin\n  expirationDate\n}",
-      "variables": {"id": "fruitId-1"}
+    And the following prettified request with variables '{"id": "fruitId-1"}' and named "Two" comes in
+      """graphql
+      query Two($id: ID!) {
+        something(id: $id) {
+          id
+          ...BazFields
+          packaging
+        }
+      }
+      
+      fragment BazFields on Baz {
+        origin
+        expirationDate
       }
       """
     When the bundling interval is hit
-    Then the server should be called with
-      """json
-      {
-      "operationName":"BundledQuery",
-      "query":"fragment r0fr0 on Foo {\n  id\n  name\n}\n\nfragment r0fr1 on Bar {\n  shape\n}\n\nfragment r1fr0 on Baz {\n  origin\n  expirationDate\n}\n\nquery BundledQuery($r0v0: ID!, $r1v0: ID!) {\n  r0f0: something(id: $r0v0) {\n    id\n    color\n    ...r0fr1\n    weight\n    ...r0fr0\n  }\n  r1f0: something(id: $r1v0) {\n    id\n    ...r1fr0\n    packaging\n  }\n}",
-      "variables": {"r0v0": "forId","r1v0": "fruitId-1"}
+    Then the server should be called with a query with variables '{"r0v0": "forId","r1v0": "fruitId-1"}' and named "BundledQuery" looking like this
+      """graphql
+      fragment r0fr0 on Foo {
+        id
+        name
+      }
+      
+      fragment r0fr1 on Bar {
+        shape
+      }
+      
+      fragment r1fr0 on Baz {
+        origin
+        expirationDate
+      }
+      
+      query BundledQuery($r0v0: ID!, $r1v0: ID!) {
+        r0f0: something(id: $r0v0) {
+          id
+          color
+          ...r0fr1
+          weight
+          ...r0fr0
+        }
+        r1f0: something(id: $r1v0) {
+          id
+          ...r1fr0
+          packaging
+        }
       }
       """
     And request number 1 should be responded with

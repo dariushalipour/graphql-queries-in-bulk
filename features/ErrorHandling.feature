@@ -15,16 +15,19 @@ Feature: Error Handling
       "data": {"r0f0":null,"r0f1":"win"}
       }
       """
-    And the following request comes in
-      """json
-      {"query":"{\n  fieldA\n  fieldB\n}"}
+    And the following prettified request comes in
+      """graphql
+      {
+        fieldA
+        fieldB
+      }
       """
     When the bundling interval is hit
-    Then the bundled request should look like this
-      """json
-      {
-      "operationName":"BundledQuery",
-      "query":"query BundledQuery {\n  r0f0: fieldA\n  r0f1: fieldB\n}"
+    Then the bundled request #1 should be named "BundledQuery" and look like this
+      """graphql
+      query BundledQuery {
+        r0f0: fieldA
+        r0f1: fieldB
       }
       """
     And request number 1 should be responded with
@@ -57,20 +60,26 @@ Feature: Error Handling
       "data": {"r0f0":null,"r0f1":"win","r1f0":15}
       }
       """
-    And the following request comes in
-      """json
-      {"query":"{\n  fieldA\n  fieldB\n}"}
+    And the following prettified request comes in
+      """graphql
+      {
+        fieldA
+        fieldB
+      }
       """
-    And the following request comes in
-      """json
-      {"query":"{\n  fieldC\n}"}
-      """
-    When the bundling interval is hit
-    Then the bundled request should look like this
+    And the following prettified request comes in
       """json
       {
-      "operationName":"BundledQuery",
-      "query":"query BundledQuery {\n  r0f0: fieldA\n  r0f1: fieldB\n  r1f0: fieldC\n}"
+        fieldC
+      }
+      """
+    When the bundling interval is hit
+    Then the bundled request #1 should be named "BundledQuery" and look like this
+      """graphql
+      query BundledQuery {
+        r0f0: fieldA
+        r0f1: fieldB
+        r1f0: fieldC
       }
       """
     And request number 1 should be responded with
@@ -113,40 +122,39 @@ Feature: Error Handling
       """json
       {"data":{"fieldC":"score"}}
       """
-    And the following request comes in
-      """json
-      {
-      "operationName": "QueryOne",
-      "query":"query QueryOne {\n  fieldA\n  fieldB\n}"
+    And the following prettified request named "QueryOne" comes in
+      """graphql
+      query QueryOne {
+        fieldA
+        fieldB
       }
       """
-    And the following request comes in
-      """json
-      {
-      "operationName": "QueryTwo",
-      "query":"query QueryTwo {\n  fieldC\n}"
+    And the following prettified request named "QueryTwo" comes in
+      """graphql
+      query QueryTwo {
+        fieldC
       }
       """
     When the bundling interval is hit
-    Then the bundled request should look like this
-      """json
-      {
-      "operationName":"BundledQuery",
-      "query":"query BundledQuery {\n  r0f0: fieldA\n  r0f1: fieldB\n  r1f0: fieldC\n}"
+    Then the bundled request #1 should be named "BundledQuery" and look like this
+      """graphql
+      query BundledQuery {
+        r0f0: fieldA
+        r0f1: fieldB
+        r1f0: fieldC
       }
       """
-    And the server should also be called 1 times with
-      """json
-      {
-      "operationName": "QueryOne",
-      "query":"query QueryOne {\n  fieldA\n  fieldB\n}"
+    And the server should also be called 1 times with a query named "QueryOne" looking like this
+      """graphql
+      query QueryOne {
+        fieldA
+        fieldB
       }
       """
-    And the server should also be called 1 times with
-      """json
-      {
-      "operationName": "QueryTwo",
-      "query":"query QueryTwo {\n  fieldC\n}"
+    And the server should also be called 1 times with a query named "QueryTwo" looking like this
+      """graphql
+      query QueryTwo {
+        fieldC
       }
       """
     And request number 1 should be responded with
