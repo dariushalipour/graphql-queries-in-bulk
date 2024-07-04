@@ -70,7 +70,7 @@ Before(() => {
 			fetchFuncRequests.push(request);
 			const payloadString = await request.clone().text();
 			const payload = RequestPayload.fromString(payloadString);
-			const queryName = payload.getOperationName();
+			const queryName = payload.operationName;
 
 			const serverResponseBody = serverResponseMocks[queryName ?? "Nameless"];
 			if (!serverResponseBody) {

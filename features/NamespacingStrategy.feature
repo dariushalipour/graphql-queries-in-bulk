@@ -4,13 +4,13 @@ Feature: Namespacing Strategy Options
     Given namespacingStrategy is set to "with-operation-name"
     And server responds "BundledQuery_One" with
       """json
-      {"data":{"One_r0f0":15,"One_r0f1":"win"}}
+      {"data":{"One_r0f0":15,"One_r0f1":{"id":"another-id"},"One_r0f2":"win"}}
       """
     And the following request comes in
       """json
       {
       "operationName": "One",
-      "query":"query One($id: ID!) {\n  fieldA(id: $id)\n  fieldB\n}",
+      "query":"fragment SubsetFields on Entity {\n  id\n}\n\nquery One($id: ID!) {\n  fieldA(id: $id)\n  fieldB {\n    ...SubsetFields\n  }\n  fieldC\n}",
       "variables":{"id": "some-id"}
       }
       """
@@ -19,13 +19,13 @@ Feature: Namespacing Strategy Options
       """json
       {
       "operationName":"BundledQuery_One",
-      "query":"query BundledQuery_One($One_r0v0: ID!) {\n  One_r0f0: fieldA(id: $One_r0v0)\n  One_r0f1: fieldB\n}",
+      "query":"fragment One_SubsetFields_r0fr0 on Entity {\n  id\n}\n\nquery BundledQuery_One($One_r0v0: ID!) {\n  One_r0f0: fieldA(id: $One_r0v0)\n  One_r0f1: fieldB {\n    ...One_SubsetFields_r0fr0\n  }\n  One_r0f2: fieldC\n}",
       "variables":{"One_r0v0": "some-id"}
       }
       """
     And request number 1 should be responded with
       """json
-      {"data":{"fieldA":15,"fieldB":"win"}}
+      {"data":{"fieldA":15,"fieldB":{"id":"another-id"},"fieldC":"win"}}
       """
 
   Scenario: Asked for with-operation-name, but the source query had no name

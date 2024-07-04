@@ -26,17 +26,17 @@
 		"build": "bunx --bun vite build && bunx --bun tsc -p tsconfig.build.json",
 		"cucumber": "bunx --bun cucumber-js",
 		"preview": "bunx --bun vite preview",
-		"lint": "bunx --bun biome check --write"
+		"lint": "bunx --bun biome check --write",
+		"typecheck": "bunx --bun tsc --noEmit"
 	},
 	"devDependencies": {
-		"@apollo/server": "^4.10.4",
 		"@biomejs/biome": "1.8.3",
 		"@cucumber/cucumber": "^10.8.0",
 		"@types/bun": "^1.1.6",
 		"@types/lodash": "^4.17.6",
 		"graphql": "^16.9.0",
 		"lodash": "^4.17.21",
-		"typescript": "^5.2.2",
+		"typescript": "^5.5.3",
 		"vite": "^5.3.1"
 	}
 }

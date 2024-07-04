@@ -1,8 +1,9 @@
 import { type DebouncedFunc, debounce, isUndefined, omitBy } from "lodash";
+import { BundledRequest } from "../domain/BundledRequest";
 import type { JsonObject } from "../domain/JsonObject";
-import { RequestBundler } from "../domain/RequestBundler";
-import { RequestPayload } from "../domain/RequestPayload";
+import { NamespacedRequestPayload } from "../domain/NamespacedRequestPayload";
 import type { NamespacingStrategy } from "../domain/NamespacingStrategy";
+import { RequestPayload } from "../domain/RequestPayload";
 
 const DEFAULT_BUNDLING_INTERVAL_MS = 100;
 const DEFAULT_BUNDLE_REQUEST_COUNT_MAX = 10;
@@ -67,7 +68,7 @@ export class ServerProxy {
 	private async canGetBundled(request: Request): Promise<boolean> {
 		const body = await request.clone().text();
 		const payload = RequestPayload.fromString(body);
-		return payload.canGetNamespaced();
+		return NamespacedRequestPayload.canGetNamespaced(payload);
 	}
 
 	private popAllTasks() {
@@ -89,16 +90,18 @@ export class ServerProxy {
 			tasks.map(({ request }) => request.clone().text()),
 		);
 
-		const { output, sourceMap } = new RequestBundler(
+		const bundledRequest = new BundledRequest(
 			this.namespacingStrategy,
 			payloads,
-		).execute();
+		);
+
+		const sourceMap = bundledRequest.getSourceMap();
 
 		const response = await this.fetchFunc(
 			new Request(sampleRequest.request.url, {
 				method: sampleRequest.request.method,
 				headers: sampleRequest.request.headers,
-				body: output,
+				body: bundledRequest.getOutput(),
 			}),
 		);
 

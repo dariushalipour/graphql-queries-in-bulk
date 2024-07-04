@@ -2,9 +2,11 @@
 	"extends": "./tsconfig",
 
 	"compilerOptions": {
+		"allowImportingTsExtensions": true,
 		"declaration": true,
 		"declarationDir": "./dist/types",
-		"emitDeclarationOnly": true
+		"emitDeclarationOnly": true,
+		"noEmit": false
 	},
 
 	"include": ["src"],

@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.2.5] - 2024-07-04
+
+### Fixed
+- handling fragments that are based on a union type
+
 ## [1.2.4] - 2024-07-03
 
 ### Added
