@@ -5,6 +5,8 @@
 ### Added
 -  `sufficient` as `namespacingStrategy` and make it the default one
 
+## [1.2.5] - 2024-07-04
+
 ### Fixed
 - handling fragments that are based on a union type
 
