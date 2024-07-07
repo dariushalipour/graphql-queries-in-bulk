@@ -1,4 +1,4 @@
-Feature: ServerProxy
+Feature: Queries In Bulk
 
   Scenario: Single Request Without Alias
     Given server responds "BundledQuery" with
