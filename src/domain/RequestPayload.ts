@@ -1,25 +1,18 @@
-import type { DocumentNode } from "graphql";
-import { DocumentHelper } from "../infra/DocumentHelper";
-import type { JsonObject } from "./JsonObject";
+import { Document } from "./Document";
+import type { RequestPayloadPlainObject } from "./RequestPayloadPlainObject";
 import { Variables } from "./Variables";
-
-type RequestPayloadPlainObject = {
-	operationName?: string;
-	query: string;
-	variables?: JsonObject;
-};
 
 export class RequestPayload {
 	public constructor(
 		public readonly operationName: string | null,
-		public readonly document: DocumentNode,
+		public readonly document: Document,
 		public readonly variables: Variables,
 	) {}
 
 	public static empty(operationName: string): RequestPayload {
 		return new RequestPayload(
 			operationName,
-			DocumentHelper.empty(operationName),
+			Document.empty(operationName),
 			Variables.empty(),
 		);
 	}
@@ -29,7 +22,7 @@ export class RequestPayload {
 
 		return new RequestPayload(
 			operationName ?? null,
-			DocumentHelper.stringToDocument(query),
+			Document.fromString(query),
 			new Variables(variables ?? {}),
 		);
 	}
@@ -38,7 +31,7 @@ export class RequestPayload {
 		return Object.fromEntries(
 			[
 				["operationName", this.operationName],
-				["query", DocumentHelper.documentToString(this.document)],
+				["query", this.document.toString()],
 				["variables", this.variables.toPayloadVariablesString()],
 			].filter(([_, v]) => Boolean(v)),
 		);

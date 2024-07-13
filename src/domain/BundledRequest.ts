@@ -30,9 +30,7 @@ export class BundledRequest {
 			NamespacedRequestPayload.empty(this.getOperationName()),
 		);
 
-		this.outputString = JSON.stringify(
-			bundledPayload.requestPayload.toPlainObject(),
-		);
+		this.outputString = JSON.stringify(bundledPayload.toPlainObject());
 	}
 
 	public getSourceMap(): ReadOnlySourceMap {

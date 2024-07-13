@@ -6,15 +6,15 @@ export class Variables {
 	private entries: [string, any][];
 
 	// biome-ignore lint/suspicious/noExplicitAny: <explanation>
-	constructor(json: Record<string, any> | null) {
+	public constructor(json: Record<string, any> | null) {
 		this.entries = Object.entries(json ?? {});
 	}
 
-	static empty(): Variables {
+	public static empty(): Variables {
 		return new Variables({});
 	}
 
-	namespaced(
+	public namespaced(
 		operationName: string | null,
 		sourceMap: RequestSourceMapWriter,
 	): Variables {
@@ -28,15 +28,15 @@ export class Variables {
 		);
 	}
 
-	mergedWith(variables: Variables): Variables {
+	public mergedWith(variables: Variables): Variables {
 		return new Variables({ ...this.toJson(), ...variables.toJson() });
 	}
 
-	toJson(): JsonObject {
+	public toJson(): JsonObject {
 		return Object.fromEntries(this.entries);
 	}
 
-	toPayloadVariablesString(): string | null {
+	public toPayloadVariablesString(): string | null {
 		if (this.entries.length === 0) {
 			return null;
 		}
