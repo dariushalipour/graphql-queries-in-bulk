@@ -129,19 +129,19 @@ Feature: Error Handling
         fieldB
       }
       """
-    And the following prettified request named "QueryTwo" comes in
+    And the following prettified request with variables '{"varOne":10}' and named "QueryTwo" comes in
       """graphql
-      query QueryTwo {
-        fieldC
+      query QueryTwo($varOne: Int!) {
+        fieldC(varOne: $varOne)
       }
       """
     When the bundling interval is hit
-    Then the bundled request #1 should be named "BundledQuery" and look like this
+    Then the bundled request #1 should have variables '{"varOne_r1v0":10}' and be named "BundledQuery" and look like this
       """graphql
-      query BundledQuery {
+      query BundledQuery($varOne_r1v0: Int!) {
         r0f0: fieldA
         r0f1: fieldB
-        r1f0: fieldC
+        r1f0: fieldC(varOne: $varOne_r1v0)
       }
       """
     And the server should also be called 1 times with a query named "QueryOne" looking like this
@@ -151,10 +151,10 @@ Feature: Error Handling
         fieldB
       }
       """
-    And the server should also be called 1 times with a query named "QueryTwo" looking like this
+    And the server should also be called 1 times with a query with variables '{"varOne":10}' and named "QueryTwo" looking like this
       """graphql
-      query QueryTwo {
-        fieldC
+      query QueryTwo($varOne: Int!) {
+        fieldC(varOne: $varOne)
       }
       """
     And request number 1 should be responded with

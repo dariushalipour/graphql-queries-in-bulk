@@ -179,6 +179,24 @@ Then(
 );
 
 Then(
+	"the bundled request #{int} should have variables {string} and be named {string} and look like this",
+	async (
+		requestIndexPlusOne: number,
+		variables: string,
+		operationName: string,
+		prettifiedQuery: string,
+	) => {
+		const request = fetchFuncRequests[requestIndexPlusOne - 1];
+
+		expect(await jsonBody(request)).toEqual({
+			operationName,
+			query: prettifiedQuery.trim(),
+			variables: JSON.stringify(JSON.parse(variables)),
+		});
+	},
+);
+
+Then(
 	"the server should be called with",
 	async (requestPayloadString: string) => {
 		const [request] = fetchFuncRequests;
@@ -245,6 +263,33 @@ Then(
 
 		for (const request of fetchFuncRequests) {
 			if (isEqual(await jsonBody(request), expectedRequestPayload)) {
+				matchingRequests++;
+			}
+		}
+
+		expect(matchingRequests).toEqual(times);
+	},
+);
+
+Then(
+	"the server should also be called {int} times with a query with variables {string} and named {string} looking like this",
+	async (
+		times: number,
+		variables: string,
+		operationName: string,
+		prettifiedQuery: string,
+	) => {
+		const expectedRequestPayload = {
+			operationName,
+			query: prettifiedQuery.trim(),
+			variables: JSON.parse(variables),
+		};
+
+		let matchingRequests = 0;
+
+		for (const request of fetchFuncRequests) {
+			const jsonBodyValue = await jsonBody(request);
+			if (isEqual(jsonBodyValue, expectedRequestPayload)) {
 				matchingRequests++;
 			}
 		}
