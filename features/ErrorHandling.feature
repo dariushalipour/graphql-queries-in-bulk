@@ -49,15 +49,15 @@ Feature: Error Handling
     Given server responds "BundledQuery" with
       """json
       {
-      "errors": [
-      {
-      "message": "oops!",
-      "locations": [{"line":6,"column":3}],
-      "path": ["r0f0"],
-      "extensions": ["Error: oops!", "stack-of.js:30:10"]
-      }
-      ],
-      "data": {"r0f0":null,"r0f1":"win","r1f0":15}
+        "errors": [
+          {
+            "message": "oops!",
+            "locations": [{"line":6,"column":3}],
+            "path": ["r0f0"],
+            "extensions": ["Error: oops!", "stack-of.js:30:10"]
+          }
+        ],
+        "data": {"r0f0":null,"r0f1":"win","r1f0":15}
       }
       """
     And the following prettified request comes in
@@ -85,15 +85,15 @@ Feature: Error Handling
     And request number 1 should be responded with
       """json
       {
-      "errors": [
-      {
-      "message": "oops!",
-      "locations": [{"line":6,"column":3}],
-      "path": ["fieldA"],
-      "extensions": ["Error: oops!", "stack-of.js:30:10"]
-      }
-      ],
-      "data":{"fieldA":null,"fieldB":"win"}
+        "errors": [
+          {
+            "message": "oops!",
+            "locations": [{"line":6,"column":3}],
+            "path": ["fieldA"],
+            "extensions": ["Error: oops!", "stack-of.js:30:10"]
+          }
+        ],
+        "data":{"fieldA":null,"fieldB":"win"}
       }
       """
     And request number 2 should be responded with
@@ -105,15 +105,16 @@ Feature: Error Handling
     Given server responds "BundledQuery" with
       """json
       {
-      "errors": [
-      {
-      "message": "oops!",
-      "locations": [{"line":6,"column":3}],
-      "extensions": ["Error: oops!", "stack-of.js:30:10"]
-      }
-      ]
+        "errors": [
+          {
+            "message": "oops!",
+            "locations": [{"line":6,"column":3}],
+            "extensions": ["Error: oops!", "stack-of.js:30:10"]
+          }
+        ]
       }
       """
+    And a listener has been set for reports of rerun without bundling
     And server responds "QueryOne" with
       """json
       {"data":{"fieldA":15,"fieldB":"win"}}
@@ -122,17 +123,19 @@ Feature: Error Handling
       """json
       {"data":{"fieldC":"score"}}
       """
-    And the following prettified request named "QueryOne" comes in
-      """graphql
-      query QueryOne {
-        fieldA
-        fieldB
+    And the following request comes in
+      """json
+      {
+        "operationName":"QueryOne",
+        "query":"query QueryOne {\n  fieldA\n  fieldB\n}"
       }
       """
-    And the following prettified request with variables '{"varOne":10}' and named "QueryTwo" comes in
-      """graphql
-      query QueryTwo($varOne: Int!) {
-        fieldC(varOne: $varOne)
+    And the following request comes in
+      """json
+      {
+        "operationName":"QueryTwo",
+        "query":"query QueryTwo($varOne: Int!) {\n  fieldC(varOne: $varOne)\n}",
+        "variables": { "varOne": 10 }
       }
       """
     When the bundling interval is hit
@@ -142,6 +145,35 @@ Feature: Error Handling
         r0f0: fieldA
         r0f1: fieldB
         r1f0: fieldC(varOne: $varOne_r1v0)
+      }
+      """
+    And the rerun without bundling should be reported with the following details
+      """json
+      {
+        "reason": "GRAPHQL_SERVER_ERROR",
+        "originalRequests": [
+          {
+            "operationName":"QueryOne",
+            "query":"query QueryOne {\n  fieldA\n  fieldB\n}"
+          },
+          {
+            "operationName":"QueryTwo",
+            "query":"query QueryTwo($varOne: Int!) {\n  fieldC(varOne: $varOne)\n}",
+            "variables": { "varOne": 10 }
+          }
+        ],
+        "bundledRequest": {
+          "operationName": "BundledQuery",
+          "query": "query BundledQuery($varOne_r1v0: Int!) {\n  r0f0: fieldA\n  r0f1: fieldB\n  r1f0: fieldC(varOne: $varOne_r1v0)\n}",
+          "variables": {"varOne_r1v0":10}
+        },
+        "errors": [
+          {
+            "message": "oops!",
+            "locations": [{"line":6,"column":3}],
+            "extensions": ["Error: oops!", "stack-of.js:30:10"]
+          }
+        ]
       }
       """
     And the server should also be called 1 times with a query named "QueryOne" looking like this

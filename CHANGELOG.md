@@ -1,9 +1,14 @@
 # Changelog
 
+## [1.4.5] - 2024-07-25
+
+### Added
+- `onRerunWithoutBundling` option for logging purposes
+
 ## [1.3.5] - 2024-07-05
 
 ### Added
--  `sufficient` as `namespacingStrategy` and make it the default one
+- `sufficient` as `namespacingStrategy` and make it the default one
 
 ## [1.2.5] - 2024-07-04
 

@@ -32,7 +32,7 @@ export class RequestPayload {
 			[
 				["operationName", this.operationName],
 				["query", this.document.toString()],
-				["variables", this.variables.toPayloadVariablesString()],
+				["variables", this.variables.toJson()],
 			].filter(([_, v]) => Boolean(v)),
 		);
 	}

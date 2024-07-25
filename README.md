@@ -20,6 +20,10 @@ import { ServerProxy } from "graphql-queries-in-bulk";
 const serverProxy = new ServerProxy({
 	bundlingIntervalMs: 100,
 	bundleRequestCountMax: 10,
+	onRerunWithoutBundling: (event) => {
+		// The rerun happens automatically.
+		// This listener is only for logging occurrences.
+	}
 });
 
 self.addEventListener("fetch", (event) => {

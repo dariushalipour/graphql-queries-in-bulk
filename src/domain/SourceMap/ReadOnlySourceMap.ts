@@ -1,3 +1,4 @@
+import type { GraphQLFormattedError } from "graphql";
 import type { JsonObject } from "../JsonObject";
 
 export interface ReadOnlySourceMap {
@@ -8,6 +9,6 @@ export interface ReadOnlySourceMap {
 
 	getSourceResponseErrors(
 		requestId: string,
-		errors: (object & { path: string[] })[] | undefined,
+		errors: GraphQLFormattedError[] | undefined,
 	): object[] | undefined;
 }

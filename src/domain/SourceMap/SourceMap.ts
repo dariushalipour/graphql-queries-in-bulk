@@ -1,3 +1,4 @@
+import type { GraphQLFormattedError } from "graphql";
 import type { JsonObject } from "../JsonObject";
 import type { NamespacingStrategy } from "../NamespacingStrategy";
 import type { ReadOnlySourceMap } from "./ReadOnlySourceMap";
@@ -37,16 +38,25 @@ export class SourceMap implements ReadOnlySourceMap {
 
 	getSourceResponseErrors(
 		requestId: string,
-		errors: (object & { path: string[] })[] | undefined,
+		errors: GraphQLFormattedError[] | undefined,
 	): object[] | undefined {
 		const scopedErrors = (errors ?? []).flatMap((error) => {
-			const sourceFieldName = this.getSourceFieldName(requestId, error.path[0]);
+			const [namespacedFieldName, ...restPath] = error.path ?? [];
+
+			if (namespacedFieldName === undefined) {
+				return [];
+			}
+
+			const sourceFieldName = this.getSourceFieldName(
+				requestId,
+				String(namespacedFieldName),
+			);
 
 			return sourceFieldName
 				? [
 						{
 							...error,
-							path: [sourceFieldName, ...error.path.slice(1)],
+							path: [sourceFieldName, ...restPath],
 						},
 					]
 				: [];

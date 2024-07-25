@@ -4,6 +4,7 @@ import { isEqual, isNil, omitBy } from "lodash";
 import { ServerProxy } from "../../src/application/ServerProxy.js";
 import type { NamespacingStrategy } from "../../src/domain/NamespacingStrategy.js";
 import { RequestPayload } from "../../src/domain/RequestPayload.js";
+import type { RerunWithoutBundlingEvent } from "../../src/index.js";
 
 let serverProxy: ServerProxy;
 // biome-ignore lint/suspicious/noExplicitAny: <explanation>
@@ -13,6 +14,10 @@ let proxyResponses: Promise<Response>[];
 let serverResponseMocks: Record<string, string>;
 let bundleRequestCountMax: number | undefined;
 let namespacingStrategy: NamespacingStrategy | undefined;
+let rerunWithoutBundlingEvents: RerunWithoutBundlingEvent[] = [];
+let onRerunWithoutBundling:
+	| ((event: RerunWithoutBundlingEvent) => void)
+	| undefined;
 let bundlingIntervalMs: number = 1 * 1000;
 
 function makeRequest(body: string): Request {
@@ -42,6 +47,7 @@ function remakeServerProxy(): void {
 		bundlingIntervalMs,
 		bundleRequestCountMax,
 		namespacingStrategy,
+		onRerunWithoutBundling,
 	});
 }
 
@@ -63,6 +69,7 @@ function parsePayloadString(payloadString: string) {
 }
 
 Before(() => {
+	rerunWithoutBundlingEvents = [];
 	fetchFuncRequests = [];
 	proxyResponses = [];
 	serverResponseMocks = {};
@@ -150,6 +157,13 @@ Given(
 	},
 );
 
+Given("a listener has been set for reports of rerun without bundling", () => {
+	onRerunWithoutBundling = mock((event) =>
+		rerunWithoutBundlingEvents.push(event),
+	);
+	remakeServerProxy();
+});
+
 Then(
 	"the bundled request #{int} should look like this",
 	async (requestIndexPlusOne: number, requestPayloadString: string) => {
@@ -191,7 +205,7 @@ Then(
 		expect(await jsonBody(request)).toEqual({
 			operationName,
 			query: prettifiedQuery.trim(),
-			variables: JSON.stringify(JSON.parse(variables)),
+			variables: JSON.parse(variables),
 		});
 	},
 );
@@ -227,7 +241,7 @@ Then(
 		expect(await jsonBody(request)).toEqual({
 			operationName,
 			query: prettifiedQuery.trim(),
-			variables: JSON.stringify(JSON.parse(variables)),
+			variables: JSON.parse(variables),
 		});
 	},
 );
@@ -312,3 +326,13 @@ Then(
 When("the bundling interval is hit", async () => {
 	await serverProxy.forceExecute();
 });
+
+Then(
+	"the rerun without bundling should be reported with the following details",
+	(eventJsonString: string) => {
+		const expectedEvent = JSON.parse(eventJsonString);
+
+		expect(onRerunWithoutBundling).toBeCalledTimes(1);
+		expect(rerunWithoutBundlingEvents).toEqual([expectedEvent]);
+	},
+);

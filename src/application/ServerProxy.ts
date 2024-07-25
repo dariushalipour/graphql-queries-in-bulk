@@ -4,15 +4,14 @@ import type { JsonObject } from "../domain/JsonObject";
 import { NamespacedRequestPayload } from "../domain/NamespacedRequestPayload";
 import type { NamespacingStrategy } from "../domain/NamespacingStrategy";
 import { RequestPayload } from "../domain/RequestPayload";
-
-const DEFAULT_BUNDLING_INTERVAL_MS = 100;
-const DEFAULT_BUNDLE_REQUEST_COUNT_MAX = 10;
-const DEFAULT_NAMESPACING_STRATEGY = "sufficient" satisfies NamespacingStrategy;
+import type { RerunWithoutBundlingEvent } from "../domain/RerunWithoutBundlingEvent";
+import type { GraphQLFormattedError } from "graphql";
 
 type ProxyOptions = {
 	bundlingIntervalMs?: number;
 	bundleRequestCountMax?: number;
 	namespacingStrategy?: NamespacingStrategy;
+	onRerunWithoutBundling?: (event: RerunWithoutBundlingEvent) => void;
 	fetchFunc?: typeof fetch;
 };
 
@@ -22,9 +21,19 @@ type ProxyTask = {
 	reject: (error: Error) => void;
 };
 
+const DEFAULT_BUNDLING_INTERVAL_MS = 100;
+const DEFAULT_BUNDLE_REQUEST_COUNT_MAX = 10;
+const DEFAULT_NAMESPACING_STRATEGY = "sufficient" satisfies NamespacingStrategy;
+const DEFAULT_ON_RERUN_WITHOUT_BUNDLING = (() => {}) satisfies (
+	event: RerunWithoutBundlingEvent,
+) => void;
+
 export class ServerProxy {
 	private readonly fetchFunc: typeof fetch;
 	private readonly namespacingStrategy: NamespacingStrategy;
+	private readonly onRerunWithoutBundling: (
+		event: RerunWithoutBundlingEvent,
+	) => void;
 	private readonly bundleRequestCountMax: number;
 	private tasks: ProxyTask[] = [];
 	private debouncedExecute: DebouncedFunc<() => Promise<void>>;
@@ -32,6 +41,10 @@ export class ServerProxy {
 	constructor(options?: ProxyOptions) {
 		this.namespacingStrategy =
 			options?.namespacingStrategy ?? DEFAULT_NAMESPACING_STRATEGY;
+
+		const onRerunWithoutBundling =
+			options?.onRerunWithoutBundling ?? DEFAULT_ON_RERUN_WITHOUT_BUNDLING;
+		this.onRerunWithoutBundling = (...args) => onRerunWithoutBundling(...args);
 
 		this.bundleRequestCountMax =
 			options?.bundleRequestCountMax ?? DEFAULT_BUNDLE_REQUEST_COUNT_MAX;
@@ -97,16 +110,18 @@ export class ServerProxy {
 
 		const sourceMap = bundledRequest.getSourceMap();
 
+		const bundledBody = bundledRequest.getOutput();
+
 		const response = await this.fetchFunc(
 			new Request(sampleRequest.request.url, {
 				method: sampleRequest.request.method,
 				headers: sampleRequest.request.headers,
-				body: bundledRequest.getOutput(),
+				body: bundledBody,
 			}),
 		);
 
 		const responseBody: {
-			errors?: (object & { path: string[] })[];
+			errors?: GraphQLFormattedError[];
 			data?: JsonObject;
 		} = await response.json();
 
@@ -129,6 +144,14 @@ export class ServerProxy {
 				resolve(new Response(scopedResponseBody));
 			});
 		} else {
+			this.onRerunWithoutBundling({
+				reason: "GRAPHQL_SERVER_ERROR",
+				originalRequests: payloads.map((payload) =>
+					RequestPayload.fromString(payload).toPlainObject(),
+				),
+				bundledRequest: RequestPayload.fromString(bundledBody).toPlainObject(),
+				errors: responseBody.errors,
+			});
 			for (const { request, resolve, reject } of tasks) {
 				this.fetchFunc(request).then(resolve, reject);
 			}

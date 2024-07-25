@@ -32,15 +32,11 @@ export class Variables {
 		return new Variables({ ...this.toJson(), ...variables.toJson() });
 	}
 
-	public toJson(): JsonObject {
-		return Object.fromEntries(this.entries);
-	}
-
-	public toPayloadVariablesString(): string | null {
+	public toJson(): JsonObject | null {
 		if (this.entries.length === 0) {
 			return null;
 		}
 
-		return JSON.stringify(this.toJson());
+		return Object.fromEntries(this.entries);
 	}
 }
