@@ -2,17 +2,16 @@
 	"name": "graphql-queries-in-bulk",
 	"description": "Intercepts GraphQL network calls to bundle and debounce requests.",
 	"private": false,
-	"license": "Apache-2.0",
-	"version": "1.4.5",
-	"type": "module",
-	"main": "./dist/graphql-queries-in-bulk.umd.cjs",
-	"module": "./dist/graphql-queries-in-bulk.js",
-	"types": "./dist/types/index.ts",
+	"license": "MIT",
+	"version": "1.4.6",
+	"main": "./dist/cjs/index.js",
+	"module": "./dist/esm/index.js",
+	"types": "./dist/dts/index.d.ts",
 	"exports": {
 		".": {
-			"import": "./dist/graphql-queries-in-bulk.js",
-			"require": "./dist/graphql-queries-in-bulk.umd.cjs",
-			"types": "./dist/types/index.ts"
+			"types": "./dist/dts/index.d.ts",
+			"require": "./dist/cjs/index.js",
+			"import": "./dist/esm/index.js"
 		}
 	},
 	"author": "Dariush Alipour",
@@ -22,21 +21,22 @@
 	},
 	"keywords": ["graphql", "service worker", "debounce", "batch requests"],
 	"scripts": {
-		"dev": "bunx --bun vite",
-		"build": "bunx --bun vite build && bunx --bun tsc -p tsconfig.build.json",
+		"build": "bunx --bun zoboz build",
 		"cucumber": "bunx --bun cucumber-js",
-		"preview": "bunx --bun vite preview",
 		"lint": "bunx --bun biome check --write",
-		"typecheck": "bunx --bun tsc --noEmit"
+		"typecheck": "bunx --bun tsc --noEmit",
+		"test:coverage": "bun test --coverage"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "1.8.3",
 		"@cucumber/cucumber": "^10.8.0",
 		"@types/bun": "^1.1.6",
 		"@types/lodash": "^4.17.7",
+		"@zoboz/core": "^3.0.1",
 		"graphql": "^16.9.0",
-		"lodash": "^4.17.21",
-		"typescript": "^5.5.3",
-		"vite": "^5.3.4"
+		"typescript": "^5.5.3"
+	},
+	"dependencies": {
+		"lodash": "^4.17.21"
 	}
 }

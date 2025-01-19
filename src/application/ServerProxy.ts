@@ -1,3 +1,4 @@
+import type { GraphQLFormattedError } from "graphql";
 import { type DebouncedFunc, debounce, isUndefined, omitBy } from "lodash";
 import { BundledRequest } from "../domain/BundledRequest";
 import type { JsonObject } from "../domain/JsonObject";
@@ -5,7 +6,6 @@ import { NamespacedRequestPayload } from "../domain/NamespacedRequestPayload";
 import type { NamespacingStrategy } from "../domain/NamespacingStrategy";
 import { RequestPayload } from "../domain/RequestPayload";
 import type { RerunWithoutBundlingEvent } from "../domain/RerunWithoutBundlingEvent";
-import type { GraphQLFormattedError } from "graphql";
 
 type ProxyOptions = {
 	bundlingIntervalMs?: number;

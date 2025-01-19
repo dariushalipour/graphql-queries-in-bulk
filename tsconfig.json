@@ -12,7 +12,6 @@
 		"isolatedModules": true,
 		"moduleDetection": "force",
 		"declaration": true,
-		"declarationDir": "./dist/types",
 		"noEmit": true,
 
 		/* Linting */
@@ -22,6 +21,5 @@
 		"noFallthroughCasesInSwitch": true,
 		"checkJs": true
 	},
-	"include": ["src", "features"],
 	"exclude": ["node_modules", "dist"]
 }
