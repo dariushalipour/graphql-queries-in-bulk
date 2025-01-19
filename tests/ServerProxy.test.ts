@@ -1,5 +1,5 @@
 import { expect, it, mock } from "bun:test";
-import { ServerProxy } from "./ServerProxy";
+import { ServerProxy } from "../src/application/ServerProxy";
 
 function makeRequest() {
 	return new Request("https://server/graphql", {

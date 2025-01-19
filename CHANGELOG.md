@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.4.7] - 2025-01-19
+
+### Improvements
+- reduced artifact size by excluding unnecessary files
+
+## [1.4.6] - 2025-01-19
+
+## Legal
+- changed license to MIT
+
+### Improvements
+- improved compatibility with CommonJS and ES Modules and Types
+
+
 ## [1.4.5] - 2024-07-25
 
 ### Added

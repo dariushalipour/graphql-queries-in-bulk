@@ -3,7 +3,7 @@
 	"description": "Intercepts GraphQL network calls to bundle and debounce requests.",
 	"private": false,
 	"license": "MIT",
-	"version": "1.4.6",
+	"version": "1.4.7",
 	"main": "./dist/cjs/index.js",
 	"module": "./dist/esm/index.js",
 	"types": "./dist/dts/index.d.ts",
@@ -25,7 +25,7 @@
 		"cucumber": "bunx --bun cucumber-js",
 		"lint": "bunx --bun biome check --write",
 		"typecheck": "bunx --bun tsc --noEmit",
-		"test:coverage": "bun test --coverage"
+		"test:coverage": "bun test test.ts --coverage"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "1.8.3",
